@@ -7,7 +7,7 @@ import (
 
 const (
 	UsersTable = "users"
-	QueueTable = "approv_queue"
+	PendingUsersTable = "pending_users"
 )
 
 type DbConfig struct {

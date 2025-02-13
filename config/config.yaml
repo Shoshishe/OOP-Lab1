@@ -1,0 +1,6 @@
+db:
+  Host: "localhost"
+  Port: "5432"
+  Username: "shosh"
+  DBname: "oop_lab1"
+  SSLMode: "disable"
