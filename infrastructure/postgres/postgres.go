@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	UsersTable = "users"
+	UsersTable        = "users"
 	PendingUsersTable = "pending_users"
 )
 

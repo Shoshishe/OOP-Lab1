@@ -1,18 +1,27 @@
 package entities
 
+const (
+	RolePendingUser    = 1
+	RoleUser           = 2
+	RoleOperator       = 3
+	RoleManager        = 4
+	RoleOuterSpecialis = 5
+	RoleAdmin          = 6
+)
+
 type User struct {
-	FullName      string
-	PasportSeries string
-	Id            int
-	MobilePhone   string
-	Email         string
-	Password      string
-	RoleType      Role
+	FullName      string `json:"full_name" db:"full_name"`
+	PasportSeries string `json:"pasport_series" db:"pasport_series"`
+	Id            int    `json:"-" db:"id"`
+	MobilePhone   string `json:"phone" db:"phone_number"`
+	Email         string `json:"email" db:"email"`
+	Password      string `json:"password" db:"password"`
+	RoleType      int    `json:"-" db:"role_id"`
 }
 
 func NewUser(options ...func(*User)) *User {
 	usr := &User{}
-	usr.RoleType = RolePendingUser;
+	usr.RoleType = RolePendingUser
 	for _, opt := range options {
 		opt(usr)
 	}
@@ -33,47 +42,4 @@ func WithOperatorRole(usr *User) {
 
 func WithOuterSpecialistRole(usr *User) {
 	usr.RoleType = RoleOuterSpecialis
-}
-
-type Role struct {
-	name   string
-	roleId int
-}
-
-func (userRole *Role) GetRoleId() int {
-	return userRole.roleId
-}
-
-func (userRole *Role) GetRoleName() string {
-	return userRole.name
-}
-
-var RolePendingUser = Role{
-	name:   "pnd_user",
-	roleId: 1,
-}
-
-var RoleUser = Role{
-	name:   "user",
-	roleId: 2,
-}
-
-var RoleOperator = Role{
-	name:   "operator",
-	roleId: 3,
-}
-
-var RoleManager = Role{
-	name:   "manager",
-	roleId: 4,
-}
-
-var RoleOuterSpecialis = Role{
-	name:   "specialist",
-	roleId: 5,
-}
-
-var RoleAdmin = Role{
-	name:   "admin",
-	roleId: 6,
 }

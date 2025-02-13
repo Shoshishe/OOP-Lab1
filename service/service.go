@@ -9,6 +9,12 @@ type Authorization interface {
 	AddForApproval(entities.User) (int, error)
 	AddUser(entities.User) (int, error)
 	GetUser(username, password string) (*entities.User, error)
+	TokenAuth
+}
+
+type TokenAuth interface {
+	GenerateToken(fullName, password string) (string, error)
+	ParseToken(accessToken string) (int, error)
 }
 
 type Service struct {

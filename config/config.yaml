@@ -3,7 +3,8 @@ db:
   Port: "5432"
   Username: "shosh"
   DBname: "oop_lab1"
-  SSLMode: "disable"
+  SSLmode: "disable"
+  Password: "loshpedus"
 net:
   Host: "localhost"
   Port: ":8080"

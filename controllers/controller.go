@@ -10,7 +10,8 @@ type Controller struct {
 }
 
 func (controller *Controller) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /auth/sign-in", controller.signUp)
+	mux.HandleFunc("POST /auth/sign-up", controller.signUp)
+	mux.HandleFunc("POST /auth/sign-in", controller.signIn)
 }
 
 func NewController(serv *service.Service) *Controller {

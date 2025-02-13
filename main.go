@@ -17,11 +17,12 @@ func main() {
 		log.Fatalf("Couldn't init config: %s", err.Error())
 	}
 	db, err := postgres.NewPostgresDb(postgres.DbConfig{
-		Host: viper.GetString("dn.Host"),
-		Port: viper.GetString("db.Port"),
+		Host:     viper.GetString("db.Host"),
+		Port:     viper.GetString("db.Port"),
 		Username: viper.GetString("db.Username"),
-		DbName: viper.GetString("db.DBname"),
-		SSLMode: viper.GetString("db.SSLmode"),
+		DbName:   viper.GetString("db.DBname"),
+		Password: viper.GetString("db.Password"),
+		SSLMode:  viper.GetString("db.SSLmode"),
 	})
 	if err != nil {
 		log.Fatalf("Failed to init db %s", err.Error())
@@ -34,7 +35,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	controllers.RegisterRoutes(mux)
-	err = http.ListenAndServe(viper.GetString("net.Host") + viper.GetString("net.Port"),mux)
+	err = http.ListenAndServe(viper.GetString("net.Host")+viper.GetString("net.Port"), mux)
 	if err != nil {
 		log.Fatal(err)
 	}

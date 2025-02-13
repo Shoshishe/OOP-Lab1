@@ -16,11 +16,6 @@ const (
 	signingKey = ",;mkljhgffxdgcfhvg"
 )
 
-type tokenAuth interface {
-	GenerateToken(fullName, password string) (string, error)
-	ParseToken(accessToken string) (int, error)
-}
-
 type tokenClaims struct {
 	jwt.Claims
 	id int
@@ -28,6 +23,7 @@ type tokenClaims struct {
 
 type AuthService struct {
 	Authorization
+	TokenAuth
 	repos infrastructure.Authorization
 }
 
