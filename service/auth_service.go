@@ -32,10 +32,6 @@ func (serv *AuthService) AddUser(user entities.User) (int, error) {
 	return serv.repos.AddUser(user)
 }
 
-func (serv *AuthService) AddForApproval(user entities.User) (int, error) {
-	return serv.repos.AddForApproval(user);
-}
-
 func (serv *AuthService) GetUser(fullName, password string) (*entities.User, error) {
 	return nil, nil
 }
