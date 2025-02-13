@@ -2,9 +2,13 @@ package main
 
 import (
 	"log"
+	"main/controllers"
 	"main/infrastructure"
 	"main/infrastructure/postgres"
-	 _"github.com/lib/pq"
+	"main/service"
+	"net/http"
+
+	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
 )
 
@@ -25,8 +29,15 @@ func main() {
 	repos := infrastructure.NewRepository(
 		postgres.NewAuthPostgres(db),
 	)
-	//Just to avoid unused import
-	repos.GetUser("","")
+	serv := service.NewService(repos)
+	controllers := controllers.NewController(serv)
+
+	mux := http.NewServeMux()
+	controllers.RegisterRoutes(mux)
+	err = http.ListenAndServe(viper.GetString("net.Host") + viper.GetString("net.Port"),mux)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func initConfig() error {

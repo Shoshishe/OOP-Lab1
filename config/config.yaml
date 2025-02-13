@@ -4,3 +4,6 @@ db:
   Username: "shosh"
   DBname: "oop_lab1"
   SSLMode: "disable"
+net:
+  Host: "localhost"
+  Port: ":8080"
