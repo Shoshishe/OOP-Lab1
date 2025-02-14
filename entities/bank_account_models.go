@@ -1,9 +1,12 @@
 package entities
 
 type BankAccount struct {
-	accountIdenitificationNum string
-	bankFullName              string
-	bankIdentificationNum     string
+	Amount                    int64  `json:"-"`
+	AccountIdenitificationNum string `json:"account_identif_num"`
+	BankFullName              string `json:"bank_name"`
+	BankIdentificationNum     string `json:"bank_identif_num"`
+	IsBlocked                 string `json:"-"`
+	IsFrozen                  string `json:"-"`
 }
 
 type Credit struct {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"main/entities"
-	"main/infrastructure"
+	"main/infrastructure"	
 )
 
 type AuthPostgres struct {
@@ -33,7 +33,7 @@ func (authRepo *AuthPostgres) AddUser(user entities.User) (int, error) {
 	return id, nil
 }
 
-func (authRepo *AuthPostgres) GetRole(userId entities.UserRole) (entities.UserRole, error) {
+func (authRepo *AuthPostgres) GetRole(userId int) (entities.UserRole, error) {
 	return entities.RolePendingUser, nil
 }
 

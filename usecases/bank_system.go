@@ -10,16 +10,16 @@ type Authorization interface {
 }
 
 type BankAccount interface {
-	CreateAccount(bankIdentificationNum string) (int, error)
-	TakeMoney(amount int, bankIdentificationNum string) error
-	TransferMoney(amount int, receiverBankIdentificationNum, senderBankIdentificationNum string) error
-	BlockBankAccount(bankIdentificationNum string) error
-	FreezeBankAccount(bankIdentificationNum string) error
+	CreateAccount(userId int, account entities.BankAccount) error
+	TakeMoney(userId int, amount int, bankIdentificationNum string) error
+	TransferMoney(userdId int, amount int, receiverBankIdentificationNum, senderBankIdentificationNum string) error
+	BlockBankAccount(userId int, accountIdenitificationNum string) error
+	FreezeBankAccount(userId int, accountIdenitificationNum string) error
 }
 
 type Bank interface {
-	GetBanksList(pagination int) ([]entities.Bank, error)
-	AddBank(entities.Bank) error
+	GetBanksList(userRole entities.UserRole, pagination int) ([]entities.Bank, error)
+	AddBank(userRole entities.UserRole, bank entities.Bank) error
 }
 
 type Client interface {
@@ -30,14 +30,14 @@ type Client interface {
 }
 
 type Operator interface {
-	ApprovePayment(requestId int) error
-	GetOperationsList(pagination int) ([]entities.Transfer, error)
-	CancelOperation(operationId int) error
+	ApprovePayment(userRole entities.UserRole, requestId int) error
+	GetOperationsList(userRole entities.UserRole, pagination int) ([]entities.Transfer, error)
+	CancelOperation(userRole entities.UserRole, operationId int) error
 }
 
 type Manager interface {
 	Operator
-	ApproveCredit(requestId int) error
+	ApproveCredit(userRole entities.UserRole, requestId int) error
 	CancelOuterWorkerOperation(operationId int) error
 }
 

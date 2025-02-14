@@ -24,6 +24,12 @@ func (controller *Controller) registerBank(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/bank/{pagination}", controller.getBanksList)
 }
 
+func (controller *Controller) registerAccounts(mux *http.ServeMux) {
+	mux.HandleFunc("POST /api/bank_account/", controller.addAccount)
+	mux.HandleFunc("POST /api/bank_acoount/freeze/{bank_identif_num}", controller.freezeAccount)
+	mux.HandleFunc("POST /api/bank_acoount/block/{bank_identif_num}", controller.blockAccount)
+}
+
 func NewController(serv *service.Service) *Controller {
 	return &Controller{services: serv}
 }

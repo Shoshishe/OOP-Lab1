@@ -2,42 +2,26 @@ package controllers
 
 import (
 	"encoding/json"
-	"errors"
 	"main/entities"
 	"net/http"
 	"strconv"
-
-)
-
-const (
-	LimitedLiabilityCompany    = "LLC"
-	IndividualEnterpreneur     = "IE"
-	ClosedJointStockCompany    = "CLJC"
-	AdditionalLiabilityCompany = "ALC"
 )
 
 func (controller *Controller) addBank(writer http.ResponseWriter, req *http.Request) {
 	var input entities.Bank
-	err := json.NewDecoder(req.Body).Decode(&input)
+	var usrRole entities.UserRole
+	usrRole, err := controller.userRole(req)
+	if err != nil {
+		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
+	}
+	err = json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	switch input.Info.Type {
-	case LimitedLiabilityCompany, IndividualEnterpreneur:
-		break
-	case ClosedJointStockCompany, AdditionalLiabilityCompany:
-		break
-	default:
-		err = errors.New("incorrect company type")
-	}
+	err = controller.services.AddBank(usrRole, input)
 	if err != nil {
-		newErrorResponse(writer, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = controller.services.AddBank(input)
-	if err != nil {
-		newErrorResponse(writer, http.StatusBadRequest, err.Error())
+		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
 		return
 	}
 	json, err := json.Marshal("ok")
@@ -50,13 +34,14 @@ func (controller *Controller) addBank(writer http.ResponseWriter, req *http.Requ
 
 func (controller *Controller) getBanksList(writer http.ResponseWriter, req *http.Request) {
 	var list []entities.Bank
+	usrRole, err := controller.userRole(req)
 	paginationArg := req.PathValue("pagination")
 	pagination, err := strconv.Atoi(paginationArg)
 	if err != nil {
 		newErrorResponse(writer, http.StatusBadRequest, "bad argument params")
 		return
 	}
-	list, err = controller.services.GetBanksList(pagination)
+	list, err = controller.services.GetBanksList(usrRole, pagination)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
 		return

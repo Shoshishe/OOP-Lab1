@@ -49,28 +49,25 @@ func (serv *AuthService) GenerateToken(fullName, password string) (string, error
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, tokenClaims{jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenTTL)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
-	},user.Id})
+	}, user.Id})
 	return token.SignedString([]byte(signingKey))
 }
 
 func (*AuthService) ParseToken(accessToken string) (int, error) {
 	token, err := jwt.ParseWithClaims(accessToken, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("invalid signing method");
+			return nil, errors.New("invalid signing method")
 		}
 		return []byte(signingKey), nil
 	})
 	if err != nil {
 		return 0, err
 	}
-	claims, ok := token.Claims.(*tokenClaims); if !ok {
+	claims, ok := token.Claims.(*tokenClaims)
+	if !ok {
 		return 0, errors.New("token type is not of type *tokenClaims")
 	}
 	return claims.id, nil
-}
-
-func (serv *UserInfoService) GetRole(userId entities.UserRole) (entities.UserRole, error) {
-	return serv.repos.GetRole(userId)
 }
 
 func NewAuthService(repos infrastructure.Authorization) *AuthService {

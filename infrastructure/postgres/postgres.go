@@ -8,6 +8,7 @@ import (
 const (
 	UsersTable = "users"
 	BanksTable = "banks"
+	AccountsTable = "accounts"
 	BanksPerRequestLimit = 50
 )
 
