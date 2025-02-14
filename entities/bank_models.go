@@ -1,6 +1,13 @@
 package entities
 
+type BankType = int
+
+const (
+	EmissionBank   = 1
+	CommercialBank = 2
+)
+
 type Bank struct {
-	info              Company
-	googleCardsRating float64
+	Info Company  `json:"bank_info" binding:"required"`
+	Type BankType `json:"bank_type" binding:"required"`
 }

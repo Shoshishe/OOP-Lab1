@@ -1,9 +1,10 @@
 package entities
 
+type CompanyType = string
 type Company struct {
-	legalName             string
-	legalAdress           string
-	payersAccountNumber   string
-	companyType           string
-	bankIdentificationNum string
+	LegalName             string      `json:"name"`
+	LegalAdress           string      `json:"adress"`
+	PayersAccountNumber   string      `json:"payers_acc_num"`
+	Type                  CompanyType `json:"company_type"`
+	BankIdentificationNum string      `json:"bank_identif_num"`
 }

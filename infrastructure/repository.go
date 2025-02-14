@@ -1,19 +1,28 @@
 package infrastructure
 
-import "main/entities"
+import (
+	"main/app_interfaces"
+	"main/usecases"
+)
 
 type Authorization interface {
-	AddUser(user entities.User) (int, error)
-	AddForApproval(user entities.User) (int, error)
-	GetUser(fullName, password string) (*entities.User, error)
+	usecases.Authorization
+}
+
+type Bank interface {
+	usecases.Bank
 }
 
 type Repository struct {
-	Authorization
+	AuthRepos Authorization
+	BankRepos Bank
+	UserRoleRepos app_interfaces.UserInfo
 }
 
-func NewRepository(authRepos Authorization) *Repository {
+func NewRepository(authRepos Authorization, bankRepos Bank,userRoleRepos app_interfaces.UserInfo) *Repository {
 	return &Repository{
-		Authorization: authRepos,
+		AuthRepos: authRepos,
+		BankRepos: bankRepos,
+		UserRoleRepos: userRoleRepos,
 	}
 }

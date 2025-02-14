@@ -42,7 +42,7 @@ func (controller *Controller) signIn(writer http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	token, err := controller.services.Authorization.GenerateToken(input.FullName, input.Password)
+	token, err := controller.services.TokenAuth.GenerateToken(input.FullName, input.Password)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
 	}

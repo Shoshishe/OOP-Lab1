@@ -4,9 +4,12 @@ import (
 	"crypto/sha512"
 	"errors"
 	"fmt"
+	"main/app_interfaces"
 	"main/entities"
 	"main/infrastructure"
+	"main/usecases"
 	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -22,8 +25,9 @@ type tokenClaims struct {
 }
 
 type AuthService struct {
-	Authorization
-	TokenAuth
+	usecases.Authorization
+	app_interfaces.TokenAuth
+	app_interfaces.UserInfo
 	repos infrastructure.Authorization
 }
 
@@ -63,6 +67,10 @@ func (*AuthService) ParseToken(accessToken string) (int, error) {
 		return 0, errors.New("token type is not of type *tokenClaims")
 	}
 	return claims.id, nil
+}
+
+func (serv *UserInfoService) GetRole(userId entities.UserRole) (entities.UserRole, error) {
+	return serv.repos.GetRole(userId)
 }
 
 func NewAuthService(repos infrastructure.Authorization) *AuthService {

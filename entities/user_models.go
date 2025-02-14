@@ -9,6 +9,7 @@ const (
 	RoleAdmin          = 6
 )
 
+type UserRole = int
 type User struct {
 	FullName      string `json:"full_name" db:"full_name"`
 	PasportSeries string `json:"pasport_series" db:"pasport_series"`
@@ -16,7 +17,7 @@ type User struct {
 	MobilePhone   string `json:"phone" db:"phone_number"`
 	Email         string `json:"email" db:"email"`
 	Password      string `json:"password" db:"password"`
-	RoleType      int    `json:"-" db:"role_id"`
+	RoleType      UserRole    `json:"-" db:"role_id"`
 }
 
 func NewUser(options ...func(*User)) *User {

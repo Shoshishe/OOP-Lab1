@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	UsersTable        = "users"
-	PendingUsersTable = "pending_users"
+	UsersTable = "users"
+	BanksTable = "banks"
+	BanksPerRequestLimit = 50
 )
 
 type DbConfig struct {
