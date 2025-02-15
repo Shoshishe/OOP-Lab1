@@ -24,12 +24,7 @@ func (controller *Controller) addBank(writer http.ResponseWriter, req *http.Requ
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
 		return
 	}
-	json, err := json.Marshal("ok")
-	if err != nil {
-		newErrorResponse(writer, http.StatusBadRequest, err.Error())
-	}
-	writer.WriteHeader(http.StatusOK)
-	writer.Write(json)
+	okResponse(writer)
 }
 
 func (controller *Controller) getBanksList(writer http.ResponseWriter, req *http.Request) {

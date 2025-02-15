@@ -17,22 +17,23 @@ type Bank interface {
 
 type BankAccount interface {
 	CreateAccount(account entities.BankAccount) error
-	TakeMoney(amount int, bankIdentificationNum string) error
+	PutMoney(amount int, accoundIdentifNum string) error
+	TakeMoney(amount int, accountIdentifNum string) error
 	TransferMoney(amount int, receiverAccountNum, senderAccountNum string) error
 	BlockBankAccount(bankIdentificationNum string) error
 	FreezeBankAccount(accountIdenitificationNum string) error
 }
 type Repository struct {
-	AuthRepos     Authorization
-	BankRepos     Bank
-	UserRoleRepos app_interfaces.UserInfo
+	AuthRepos        Authorization
+	BankRepos        Bank
+	InfoRepos	     app_interfaces.Info
 	BankAccountRepos BankAccount
 }
 
-func NewRepository(authRepos Authorization, bankRepos Bank, userRoleRepos app_interfaces.UserInfo) *Repository {
+func NewRepository(authRepos Authorization, bankRepos Bank, infoRepos app_interfaces.Info) *Repository {
 	return &Repository{
 		AuthRepos:     authRepos,
 		BankRepos:     bankRepos,
-		UserRoleRepos: userRoleRepos,
+		InfoRepos: infoRepos,
 	}
 }

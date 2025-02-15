@@ -17,3 +17,9 @@ func newErrorResponse(writer http.ResponseWriter, code int, message string) {
 	res, _ := json.Marshal(message)
 	writer.Write(res)
 }
+
+func okResponse(writer http.ResponseWriter) {
+	writer.WriteHeader(http.StatusOK)
+	res, _ := json.Marshal("ok")
+	writer.Write(res)
+}

@@ -26,8 +26,10 @@ func (controller *Controller) registerBank(mux *http.ServeMux) {
 
 func (controller *Controller) registerAccounts(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/bank_account/", controller.addAccount)
-	mux.HandleFunc("POST /api/bank_acoount/freeze/{bank_identif_num}", controller.freezeAccount)
-	mux.HandleFunc("POST /api/bank_acoount/block/{bank_identif_num}", controller.blockAccount)
+	mux.HandleFunc("PUT /api/bank_acoount/freeze/{bank_identif_num}", controller.freezeAccount)
+	mux.HandleFunc("PUT /api/bank_acoount/block/{bank_identif_num}", controller.blockAccount)
+	mux.HandleFunc("PUT /api/bank_account/put/{account_identif_num}/{money_amount}", controller.putMoney)
+	mux.HandleFunc("PUT /api/bank_account/take/{account_identif_num}/{money_amount}", controller.takeMoney)
 }
 
 func NewController(serv *service.Service) *Controller {

@@ -11,6 +11,7 @@ type Authorization interface {
 
 type BankAccount interface {
 	CreateAccount(userId int, account entities.BankAccount) error
+	PutMoney(userId int, amount int, accountIdentificationNum string) error
 	TakeMoney(userId int, amount int, bankIdentificationNum string) error
 	TransferMoney(userdId int, amount int, receiverBankIdentificationNum, senderBankIdentificationNum string) error
 	BlockBankAccount(userId int, accountIdenitificationNum string) error
@@ -21,6 +22,12 @@ type Bank interface {
 	GetBanksList(userRole entities.UserRole, pagination int) ([]entities.Bank, error)
 	AddBank(userRole entities.UserRole, bank entities.Bank) error
 }
+
+type Company interface {
+	GetPaymentRequests(pagination int) error
+	SendPayment(userId int) error
+}
+
 
 type Client interface {
 	TakeCredit(bankIdentificationNum string, duration int) error
@@ -40,12 +47,6 @@ type Manager interface {
 	ApproveCredit(userRole entities.UserRole, requestId int) error
 	CancelOuterWorkerOperation(operationId int) error
 }
-
-type Company interface {
-	GetPaymentRequests(pagination int) error
-	SendPayment(userId int) error
-}
-
 type OuterWorker interface {
 	SendInfoForPayment(userId int) error
 	UserTransferRequest(userId, amount int) (int, error)

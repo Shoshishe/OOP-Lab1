@@ -38,6 +38,6 @@ func (controller *Controller) userRole(req *http.Request) (entities.UserRole, er
 	if err != nil {
 		return 0, err
 	}
-	role, err := controller.services.GetRole(userId)
+	role, err := controller.services.GetUserRole(userId)
 	return role, err
 }

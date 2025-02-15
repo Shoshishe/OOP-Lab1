@@ -31,7 +31,19 @@ func (bankAccountRepo *BankAccountPostgres) BlockBankAccount(accountIdenitificat
 	return err
 }
 
-func (bankAccountRepo *BankAccountPostgres) Transfer(sendAmount int, receiverAccountNum, senderAccountNum string) error {
+func (bankAccountRepo *BankAccountPostgres) PutMoney(amount int, accountIdentificationNum string) error {
+	query := fmt.Sprintf("UPDATE %s SET amount=amount+$1 WHERE account_identif_num=$2", AccountsTable)
+	_, err := bankAccountRepo.db.Exec(query, amount, accountIdentificationNum)
+	return err
+}
+
+func (bankAccountRepo *BankAccountPostgres) TakeMoney(amount int, accountIdentificationNum string) error {
+	query := fmt.Sprintf("UPDATE %s SET amount=amount-$1 WHERE account_identif_num=$2", AccountsTable)
+	_, err := bankAccountRepo.db.Exec(query, amount, accountIdentificationNum)
+	return err
+}
+
+func (bankAccountRepo *BankAccountPostgres) TransferMoney(sendAmount int, receiverAccountNum, senderAccountNum string) error {
 	var moneyAmount int
 	tx, err := bankAccountRepo.db.Begin()
 	if err != nil {
@@ -64,7 +76,6 @@ func (bankAccountRepo *BankAccountPostgres) Transfer(sendAmount int, receiverAcc
 	tx.Commit()
 	return nil
 }
-
 func NewBankAccountPostgres(db *sql.DB) *BankAccountPostgres {
 	return &BankAccountPostgres{db: db}
 }

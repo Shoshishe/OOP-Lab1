@@ -7,6 +7,14 @@ type TokenAuth interface {
 	ParseToken(accessToken string) (int, error)
 }
 
+type Info interface {
+	UserInfo
+	AccountInfo
+}
+
 type UserInfo interface {
-	GetRole(userId int) (entities.UserRole, error)
+	GetUserRole(userId int) (entities.UserRole, error)
+}
+type AccountInfo interface {
+	CheckBelonging(userId int, accountIdentifNum string) (bool, error)
 }
