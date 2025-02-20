@@ -1,21 +1,21 @@
 package service
 
 import (
-	"crypto/sha512"
 	"errors"
-	"fmt"
-	"main/app_interfaces"
-	"main/entities"
-	"main/infrastructure"
-	"main/usecases"
+	"main/domain/entities"
+	"main/service/entities_models/request"
+	"main/service/entities_models/response"
+	request_mappers "main/service/mappers/request"
+	response_mappers "main/service/mappers/response"
+	"main/utils"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// TODO: DTOS
 const (
 	tokenTTL   = 12 * time.Hour
-	saltCrypto = "35edtryuiojhgytfe3"
 	signingKey = ",;mkljhgffxdgcfhvg"
 )
 
@@ -24,20 +24,42 @@ type tokenClaims struct {
 	id int
 }
 
+type TokenAuth interface {
+	GenerateToken(fullName, password string) (string, error)
+	ParseToken(accessToken string) (int, error)
+}
+
+type RoleAccess interface {
+	GetUserRole(userId int) (entities.UserRole, error)
+}
+
+type Authorization interface {
+	AddUser(user request.UserSignUpModel) error
+	GetUser(username, password string) (*response.UserAuthModel, error)
+}
+
 type AuthService struct {
-	usecases.Authorization
-	app_interfaces.TokenAuth
-	app_interfaces.UserInfo
-	repos infrastructure.Authorization
+	Authorization
+	TokenAuth
+	RoleAccess
+	repos AuthorizationRepository
 }
 
-func (serv *AuthService) AddUser(user entities.User) (int, error) {
-	user.Password = generateHashedPassword(user.Password)
-	return serv.repos.AddUser(user)
+func (serv *AuthService) AddUser(user request.UserSignUpModel) error {
+	user.Password = utils.GenerateHashedPassword(user.Password)
+	userEntity, err := request_mappers.ToUserEntitiy(user, serv.repos)
+	if err != nil {
+		return err
+	}
+	return serv.repos.AddUser(*userEntity)
 }
 
-func (serv *AuthService) GetUser(fullName, password string) (*entities.User, error) {
-	return nil, nil
+func (serv *AuthService) GetUser(fullName, password string) (*response.UserAuthModel, error) {
+	usrEntity, err := serv.repos.GetUser(fullName, password)
+	if err != nil {
+		return nil, err
+	}
+	return response_mappers.ToUserAuthModel(*usrEntity), err
 }
 
 func (serv *AuthService) GenerateToken(fullName, password string) (string, error) {
@@ -45,15 +67,16 @@ func (serv *AuthService) GenerateToken(fullName, password string) (string, error
 	if err != nil {
 		return "", err
 	}
-	fmt.Print(user)
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, tokenClaims{jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenTTL)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
-	}, user.Id})
+	},
+		user.Id(),
+	})
 	return token.SignedString([]byte(signingKey))
 }
 
-func (*AuthService) ParseToken(accessToken string) (int, error) {
+func (serv *AuthService) ParseToken(accessToken string) (int, error) {
 	token, err := jwt.ParseWithClaims(accessToken, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("invalid signing method")
@@ -70,12 +93,8 @@ func (*AuthService) ParseToken(accessToken string) (int, error) {
 	return claims.id, nil
 }
 
-func NewAuthService(repos infrastructure.Authorization) *AuthService {
-	return &AuthService{repos: repos}
-}
-
-func generateHashedPassword(password string) string {
-	hash := sha512.New()
-	hash.Write([]byte(password))
-	return fmt.Sprintf("%x", hash.Sum([]byte(saltCrypto)))
+func NewAuthService(repos AuthorizationRepository) *AuthService {
+	return &AuthService{
+		repos: repos,
+	}
 }

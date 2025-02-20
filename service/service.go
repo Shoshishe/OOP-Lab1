@@ -1,25 +1,54 @@
 package service
 
 import (
-	"main/app_interfaces"
-	"main/infrastructure"
-	infoService "main/service/info_services"
-	"main/usecases"
+	"main/domain/entities"
+	"main/domain/usecases"
 )
 
 type Service struct {
-	usecases.Authorization
-	usecases.Bank
-	usecases.BankAccount
-	app_interfaces.TokenAuth
-	app_interfaces.Info
+	Authorization
+	Bank
+	BankAccount
+	TokenAuth
+	RoleAccess
 }
 
-func NewService(repos *infrastructure.Repository) *Service {
+type Repository struct {
+	AuthRepos        AuthorizationRepository
+	BankRepos        BankRepository
+	BankAccountRepos AccountRepository
+}
+type AuthorizationRepository interface {
+	usecases.Authorization
+	RoleAccess
+	entities.UserOutside
+}
+
+type BankRepository interface {
+	usecases.Bank
+	entities.CompanyOutside
+}
+
+type AccountRepository interface {
+	usecases.BankAccount
+	entities.TransferOutside
+}
+
+func NewRepository(authRepos AuthorizationRepository, bankRepos BankRepository, accountRepos AccountRepository) *Repository {
+	return &Repository{
+		AuthRepos:        authRepos,
+		BankRepos:        bankRepos,
+		BankAccountRepos: accountRepos,
+	}
+}
+
+func NewService(repos Repository) *Service {
+	AuthService := NewAuthService(repos.AuthRepos)
 	return &Service{
-		Authorization: NewAuthService(repos.AuthRepos),
+		Authorization: AuthService,
+		TokenAuth:     AuthService,
+		RoleAccess:    AuthService,
 		Bank:          NewBankService(repos.BankRepos),
-		Info:          infoService.NewInfoService(repos.InfoRepos),
-		BankAccount:   NewBankAccountService(repos.BankAccountRepos),
+		BankAccount:   NewBankAccount(repos.BankAccountRepos),
 	}
 }

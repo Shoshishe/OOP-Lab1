@@ -2,35 +2,31 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
-	"main/entities"
+	"main/service/entities_models/request"
 	"net/http"
 )
 
 func (controller *Controller) signUp(writer http.ResponseWriter, req *http.Request) {
-	var input entities.User
+	var input request.UserSignUpModel
 	err := json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	id, err := controller.services.AddUser(input)
+	if err != nil {
+		newErrorResponse(writer, http.StatusBadRequest, err.Error()) 
+		return
+	}
+	err = controller.services.AddUser(input)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	writer.WriteHeader(http.StatusOK)
-	json, err := json.Marshal("id: " + fmt.Sprint(id))
-	if err != nil {
-		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
-		return
-	}
-	writer.Write(json)
+	okResponse(writer)
 }
 
 type SignInInput struct {
-	FullName string `json:"username" binding:"required"`
+	FullName string `json:"full_name" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 

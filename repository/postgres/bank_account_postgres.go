@@ -4,16 +4,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"main/entities"
-	"main/infrastructure"
+	"main/domain/entities"
+	"main/service"
 )
 
 type BankAccountPostgres struct {
-	infrastructure.BankAccount
+	service.AccountRepository
 	db *sql.DB
 }
 
-func (bankAccountRepo *BankAccountPostgres) CreateAccount(bankIdentificationNum string, account entities.BankAccount) error {
+func (bankAccountRepo *BankAccountPostgres) CreateAccount(account entities.BankAccount) error {
 	query := fmt.Sprintf("INSERT INTO %s (account_identif_num,bank_name,bank_identif_num) VALUES ($1,$2,$3)", AccountsTable)
 	_, err := bankAccountRepo.db.Exec(query, account.AccountIdenitificationNum, account.BankFullName, account.BankIdentificationNum)
 	return err
@@ -31,19 +31,19 @@ func (bankAccountRepo *BankAccountPostgres) BlockBankAccount(accountIdenitificat
 	return err
 }
 
-func (bankAccountRepo *BankAccountPostgres) PutMoney(amount int, accountIdentificationNum string) error {
+func (bankAccountRepo *BankAccountPostgres) PutMoney(amount entities.MoneyAmount, accountIdentificationNum string) error {
 	query := fmt.Sprintf("UPDATE %s SET amount=amount+$1 WHERE account_identif_num=$2", AccountsTable)
 	_, err := bankAccountRepo.db.Exec(query, amount, accountIdentificationNum)
 	return err
 }
 
-func (bankAccountRepo *BankAccountPostgres) TakeMoney(amount int, accountIdentificationNum string) error {
+func (bankAccountRepo *BankAccountPostgres) TakeMoney(amount entities.MoneyAmount, accountIdentificationNum string) error {
 	query := fmt.Sprintf("UPDATE %s SET amount=amount-$1 WHERE account_identif_num=$2", AccountsTable)
 	_, err := bankAccountRepo.db.Exec(query, amount, accountIdentificationNum)
 	return err
 }
 
-func (bankAccountRepo *BankAccountPostgres) TransferMoney(sendAmount int, receiverAccountNum, senderAccountNum string) error {
+func (bankAccountRepo *BankAccountPostgres) TransferMoney(transfer entities.Transfer) error {
 	var moneyAmount int
 	tx, err := bankAccountRepo.db.Begin()
 	if err != nil {
@@ -51,24 +51,24 @@ func (bankAccountRepo *BankAccountPostgres) TransferMoney(sendAmount int, receiv
 		return err
 	}
 	checkAmountQuery := fmt.Sprintf("SELECT sendAmount FROM %s WHERE account_identif_num=$1", AccountsTable)
-	row := bankAccountRepo.db.QueryRow(checkAmountQuery, senderAccountNum)
+	row := bankAccountRepo.db.QueryRow(checkAmountQuery, transfer.SenderAccountNum)
 	err = row.Scan(&moneyAmount)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-	if moneyAmount < sendAmount {
+	if moneyAmount < int(transfer.SumOfTransfer) {
 		tx.Rollback()
 		return errors.New("insufficient money amount")
 	}
 	changeSenderMoneyQuery := fmt.Sprintf("UPDATE %s SET amount=amount-$1 WHERE account_identif_num=$2", AccountsTable)
-	_, err = bankAccountRepo.db.Exec(changeSenderMoneyQuery, sendAmount, senderAccountNum)
+	_, err = bankAccountRepo.db.Exec(changeSenderMoneyQuery, transfer.SumOfTransfer, transfer.SenderAccountNum)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	changeReceiverMoneyQuery := fmt.Sprintf("UPDATE %s SET amount=amount+$1 WHERE account_identif_num=$2", AccountsTable)
-	_, err = bankAccountRepo.db.Exec(changeReceiverMoneyQuery, sendAmount, receiverAccountNum)
+	_, err = bankAccountRepo.db.Exec(changeReceiverMoneyQuery, transfer.SumOfTransfer, transfer.ReceiverAccountNum)
 	if err != nil {
 		tx.Rollback()
 		return err

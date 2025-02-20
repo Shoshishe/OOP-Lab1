@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
-	"main/entities"
+	"main/domain/entities"
 	"net/http"
 	"strconv"
 )
@@ -13,13 +13,17 @@ func (controller *Controller) addBank(writer http.ResponseWriter, req *http.Requ
 	usrRole, err := controller.userRole(req)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if usrRole != entities.RoleAdmin {
+		newErrorResponse(writer, http.StatusUnauthorized, "access denied")
 	}
 	err = json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	err = controller.services.AddBank(usrRole, input)
+	err = controller.services.AddBank(input, usrRole)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
 		return
@@ -30,13 +34,24 @@ func (controller *Controller) addBank(writer http.ResponseWriter, req *http.Requ
 func (controller *Controller) getBanksList(writer http.ResponseWriter, req *http.Request) {
 	var list []entities.Bank
 	usrRole, err := controller.userRole(req)
+
+	if err != nil {
+		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if usrRole == entities.RolePendingUser {
+		newErrorResponse(writer, http.StatusUnauthorized, "request still pending")
+		return
+	}
+
 	paginationArg := req.PathValue("pagination")
 	pagination, err := strconv.Atoi(paginationArg)
 	if err != nil {
 		newErrorResponse(writer, http.StatusBadRequest, "bad argument params")
 		return
 	}
-	list, err = controller.services.GetBanksList(usrRole, pagination)
+	list, err = controller.services.GetBanksList(pagination, usrRole)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
 		return

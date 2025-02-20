@@ -3,12 +3,9 @@ package main
 import (
 	"log"
 	"main/controllers"
-	"main/infrastructure"
-	"main/infrastructure/postgres"
-	infoPostgres "main/infrastructure/postgres/info_postgres"
+	"main/repository/postgres"
 	"main/service"
 	"net/http"
-
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
 )
@@ -28,12 +25,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to init db %s", err.Error())
 	}
-	repos := infrastructure.NewRepository(
+	repos := service.NewRepository(
 		postgres.NewAuthPostgres(db),
 		postgres.NewBankPostgres(db),
-		infoPostgres.NewInfoPostgres(db),
+		postgres.NewBankAccountPostgres(db),
 	)
-	serv := service.NewService(repos)
+	serv := service.NewService(*repos)
 	controllers := controllers.NewController(serv)
 
 	mux := http.NewServeMux()

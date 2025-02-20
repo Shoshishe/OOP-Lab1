@@ -8,3 +8,6 @@ db:
 net:
   Host: "localhost"
   Port: ":8080"
+
+#LOOK HERE
+#REQUEST->Service, which simply defines DTO that should be for input and output->Calls usecases, implemented by repository(!)   

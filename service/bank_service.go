@@ -1,46 +1,36 @@
 package service
 
 import (
-	"main/entities"
-	"main/infrastructure"
-	"main/usecases"
-	"errors"
+	"main/domain/entities"
+
+	serviceErrors "main/service/errors"
 )
 
-const (
-	LimitedLiabilityCompany    = "LLC"
-	IndividualEnterpreneur     = "IE"
-	ClosedJointStockCompany    = "CLJC"
-	AdditionalLiabilityCompany = "ALC"
-)
+type Bank interface {
+	GetBanksList(pagination int, userRole entities.UserRole) ([]entities.Bank, error)
+	AddBank(bank entities.Bank, userRole entities.UserRole) error
+
+}
 type BankService struct {
-	usecases.Bank
-	repos infrastructure.Bank
+	Bank
+	repos BankRepository
+	//publisher events.EventPublisher
 }
 
-func (serv *BankService) GetBanksList(userRole entities.UserRole, pagination int) ([]entities.Bank, error) {
+func (serv *BankService) GetBanksList(pagination int, userRole entities.UserRole) ([]entities.Bank, error) {
 	if userRole != entities.RoleAdmin {
-		return nil, errors.New("not accessible")
+		return nil, serviceErrors.NewRoleError("not permitted on a requested role")
 	}
 	return serv.repos.GetBanksList(pagination)
 }
 
-func (serv *BankService) AddBank(userRole entities.UserRole, bank entities.Bank) error {
-	var err error
-	switch bank.Info.Type {
-	case LimitedLiabilityCompany, IndividualEnterpreneur:
-		break
-	case ClosedJointStockCompany, AdditionalLiabilityCompany:
-		break
-	default:
-		err = errors.New("incorrect company type")
-	}
-	if err != nil {
-		return err
+func (serv *BankService) AddBank(bank entities.Bank, usrRole entities.UserRole) error {
+	if usrRole != entities.RoleAdmin {
+		return serviceErrors.NewRoleError("")
 	}
 	return serv.repos.AddBank(bank)
 }
 
-func NewBankService(repos infrastructure.Bank) *BankService {
+func NewBankService(repos BankRepository) *BankService {
 	return &BankService{repos: repos}
 }

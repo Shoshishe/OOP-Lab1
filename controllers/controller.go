@@ -1,12 +1,18 @@
 package controllers
 
 import (
+	"main/domain/usecases"
 	"main/service"
 	"net/http"
 )
 
 type Controller struct {
 	services *service.Service
+	usecases.Authorization
+}
+
+type BankController struct {
+	service *service.BankService
 }
 
 func (controller *Controller) RegisterRoutes(mux *http.ServeMux) {
