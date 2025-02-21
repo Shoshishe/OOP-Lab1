@@ -1,43 +1,64 @@
 package controllers
 
 import (
-	"main/domain/usecases"
 	"main/service"
 	"net/http"
 )
 
 type Controller struct {
-	services *service.Service
-	usecases.Authorization
+	bankController    BankController
+	accountController AccountController
+	authController    AuthController
+	// services          *service.Service
+	// authService       service.TokenAuth
+}
+
+type Middleware struct {
+	authMiddleware service.TokenAuth
+}
+
+func NewMiddleware(authMiddleware service.TokenAuth) *Middleware {
+	return &Middleware{
+		authMiddleware: authMiddleware,
+	}
 }
 
 type BankController struct {
-	service *service.BankService
+	service    service.Bank
+	middleware Middleware
 }
 
 func (controller *Controller) RegisterRoutes(mux *http.ServeMux) {
-	controller.registerAuthorization(mux)
-	controller.registerBank(mux)
+	controller.authController.registerAuthorization(mux)
+	controller.bankController.registerBank(mux)
+	controller.accountController.registerAccounts(mux)
 }
 
-func (controller *Controller) registerAuthorization(mux *http.ServeMux) {
-	mux.HandleFunc("POST /auth/sign-up", controller.signUp)
-	mux.HandleFunc("POST /auth/sign-in", controller.signIn)
+func (authController *AuthController) registerAuthorization(mux *http.ServeMux) {
+	mux.HandleFunc("POST /auth/sign-up", authController.signUp)
+	mux.HandleFunc("POST /auth/sign-in", authController.signIn)
 }
 
-func (controller *Controller) registerBank(mux *http.ServeMux) {
-	mux.HandleFunc("POST /api/bank", controller.addBank)
-	mux.HandleFunc("GET /api/bank/{pagination}", controller.getBanksList)
+func (bankController *BankController) registerBank(mux *http.ServeMux) {
+	mux.HandleFunc("POST /api/bank", bankController.addBank)
+	mux.HandleFunc("GET /api/bank/{pagination}", bankController.getBanksList)
 }
 
-func (controller *Controller) registerAccounts(mux *http.ServeMux) {
-	mux.HandleFunc("POST /api/bank_account/", controller.addAccount)
-	mux.HandleFunc("PUT /api/bank_acoount/freeze/{bank_identif_num}", controller.freezeAccount)
-	mux.HandleFunc("PUT /api/bank_acoount/block/{bank_identif_num}", controller.blockAccount)
-	mux.HandleFunc("PUT /api/bank_account/put/{account_identif_num}/{money_amount}", controller.putMoney)
-	mux.HandleFunc("PUT /api/bank_account/take/{account_identif_num}/{money_amount}", controller.takeMoney)
+func (accountController *AccountController) registerAccounts(mux *http.ServeMux) {
+	mux.HandleFunc("POST /api/bank_account/", accountController.addAccount)
+	mux.HandleFunc("PUT /api/bank_acoount/freeze/{bank_identif_num}", accountController.freezeAccount)
+	mux.HandleFunc("PUT /api/bank_acoount/block/{bank_identif_num}", accountController.blockAccount)
+	mux.HandleFunc("PUT /api/bank_account/put/{account_identif_num}/{money_amount}", accountController.putMoney)
+	mux.HandleFunc("PUT /api/bank_account/take/{account_identif_num}/{money_amount}", accountController.takeMoney)
+	mux.HandleFunc("PUT /api/bank_account/close/{account_identif_num}", accountController.closeAccount)
+	mux.HandleFunc("PUT /api/bank_account/transfer/", accountController.transferMoney)
 }
 
 func NewController(serv *service.Service) *Controller {
-	return &Controller{services: serv}
+	middleware := NewMiddleware(serv.TokenAuth)
+	return &Controller{
+		bankController:    *NewBankController(serv.BankServ, *middleware),
+		accountController: *NewAccountController(serv.AccountServ, *middleware),
+		authController:    *NewAuthController(serv.AuthService, serv.TokenAuth),
+	}
 }

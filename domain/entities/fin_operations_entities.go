@@ -209,7 +209,7 @@ func (transfer *Transfer) ValidateMoneyAmount() error {
 	return nil
 }
 
-func (*Transfer) NewTransfer(transferOwnerId int, SenderNum AccountIdenitificationNum, ReceiverNum AccountIdenitificationNum, Amount MoneyAmount) (*Transfer, error) {
+func NewTransfer(transferOwnerId int, SenderNum AccountIdenitificationNum, ReceiverNum AccountIdenitificationNum, Amount MoneyAmount) (*Transfer, error) {
 	transferValue := &Transfer{
 		transferOwnerId:    transferOwnerId,
 		SenderAccountNum:   SenderNum,

@@ -9,7 +9,7 @@ import (
 
 const authorizationHeader = "Authorization"
 
-func (controller *Controller) userIdentity(req *http.Request) (int, error) {
+func (middleware *Middleware) userIdentity(req *http.Request) (int, error) {
 	header := req.Header.Get(authorizationHeader)
 	if header == "" {
 		return 0, errors.New("empty header")
@@ -18,14 +18,14 @@ func (controller *Controller) userIdentity(req *http.Request) (int, error) {
 	if len(headerParts) != 2 {
 		return 0, errors.New("")
 	}
-	userId, err := controller.services.ParseToken(headerParts[1])
+	userId, err := middleware.authMiddleware.ParseToken(headerParts[1])
 	if err != nil {
 		return 0, err
 	}
 	return userId, nil
 }
 
-func (controller *Controller) userRole(req *http.Request) (entities.UserRole, error) {
+func (middleware *Middleware) userRole(req *http.Request) (entities.UserRole, error) {
 	var userId int
 	var err error
 	header := req.Header.Get(authorizationHeader)
@@ -36,11 +36,11 @@ func (controller *Controller) userRole(req *http.Request) (entities.UserRole, er
 	if len(headerParts) != 2 {
 		return 0, errors.New("invalid authorization header")
 	}
-	userId, err = controller.services.ParseToken(headerParts[1])
+	userId, err = middleware.authMiddleware.ParseToken(headerParts[1])
 	if err != nil {
 		return 0, err
 	}
-	role, err := controller.services.GetUserRole(userId)
+	role, err :=  middleware.authMiddleware.GetUserRole(userId)
 	if err != nil {
 		return 0, err
 	}

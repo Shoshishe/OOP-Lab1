@@ -6,11 +6,10 @@ import (
 )
 
 type Service struct {
-	Authorization
-	Bank
-	BankAccount
+	AuthService Authorization
+	BankServ    Bank
+	AccountServ BankAccount
 	TokenAuth
-	RoleAccess
 }
 
 type Repository struct {
@@ -20,7 +19,7 @@ type Repository struct {
 }
 type AuthorizationRepository interface {
 	usecases.Authorization
-	RoleAccess
+	roleAccess
 	entities.UserOutside
 }
 
@@ -45,10 +44,9 @@ func NewRepository(authRepos AuthorizationRepository, bankRepos BankRepository, 
 func NewService(repos Repository) *Service {
 	AuthService := NewAuthService(repos.AuthRepos)
 	return &Service{
-		Authorization: AuthService,
-		TokenAuth:     AuthService,
-		RoleAccess:    AuthService,
-		Bank:          NewBankService(repos.BankRepos),
-		BankAccount:   NewBankAccount(repos.BankAccountRepos),
+		AuthService: AuthService,
+		TokenAuth:   AuthService,
+		BankServ:    NewBankService(repos.BankRepos),
+		AccountServ: NewBankAccount(repos.BankAccountRepos),
 	}
 }

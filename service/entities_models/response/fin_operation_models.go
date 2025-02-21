@@ -12,4 +12,3 @@ type LoanModel struct {
 	LoanAmount        int64           `json:"amount" db:"amount"`
 	EndOfLoanTerm     time.Time       `json:"end_of_term" db:"end_of_term"`
 }
-

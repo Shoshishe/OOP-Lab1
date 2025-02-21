@@ -3,14 +3,22 @@ package controllers
 import (
 	"encoding/json"
 	"main/domain/entities"
+	"main/service"
 	"net/http"
 	"strconv"
 )
 
-func (controller *Controller) addBank(writer http.ResponseWriter, req *http.Request) {
+func NewBankController(serv service.Bank, middleware Middleware) *BankController {
+	return &BankController{
+		service: serv,
+		middleware: middleware,
+	}
+}
+
+func (bankController *BankController) addBank(writer http.ResponseWriter, req *http.Request) {
 	var input entities.Bank
 	var usrRole entities.UserRole
-	usrRole, err := controller.userRole(req)
+	usrRole, err := bankController.middleware.userRole(req)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
 		return
@@ -23,7 +31,7 @@ func (controller *Controller) addBank(writer http.ResponseWriter, req *http.Requ
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	err = controller.services.AddBank(input, usrRole)
+	err = bankController.service.AddBank(input, usrRole)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
 		return
@@ -31,9 +39,9 @@ func (controller *Controller) addBank(writer http.ResponseWriter, req *http.Requ
 	okResponse(writer)
 }
 
-func (controller *Controller) getBanksList(writer http.ResponseWriter, req *http.Request) {
+func (bankController *BankController) getBanksList(writer http.ResponseWriter, req *http.Request) {
 	var list []entities.Bank
-	usrRole, err := controller.userRole(req)
+	usrRole, err :=  bankController.middleware.userRole(req)
 
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
@@ -51,7 +59,7 @@ func (controller *Controller) getBanksList(writer http.ResponseWriter, req *http
 		newErrorResponse(writer, http.StatusBadRequest, "bad argument params")
 		return
 	}
-	list, err = controller.services.GetBanksList(pagination, usrRole)
+	list, err = bankController.service.GetBanksList(pagination, usrRole)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
 		return

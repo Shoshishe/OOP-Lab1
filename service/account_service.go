@@ -13,7 +13,7 @@ type BankAccount interface {
 	BlockBankAccount(accountIdentificationNum entities.AccountIdenitificationNum, usrRole entities.UserRole) error
 	PutMoney(amount entities.MoneyAmount, accountIdentificationNum entities.AccountIdenitificationNum, usrRole entities.UserRole) error
 	TakeMoney(amount entities.MoneyAmount, accountIdentificationNum entities.AccountIdenitificationNum, usrRole entities.UserRole) error
-	TransferMoney(transfer entities.Transfer, userRole entities.UserRole) error
+	TransferMoney(transfer request.TransferModel, userRole entities.UserRole) error
 	CloseBankAccount(accountIdentificationNum entities.AccountIdenitificationNum, userRole entities.UserRole) error
 }
 type BankAccountService struct {
@@ -65,11 +65,15 @@ func (serv *BankAccountService) TakeMoney(amount entities.MoneyAmount, accountId
 	return serv.repos.TakeMoney(amount, accountIdentificationNum)
 }
 
-func (serv *BankAccountService) TransferMoney(transfer entities.Transfer, usrRole entities.UserRole) error {
+func (serv *BankAccountService) TransferMoney(transfer request.TransferModel, usrRole entities.UserRole) error {
 	if usrRole != entities.RoleUser {
 		return serviceErrors.NewRoleError("not permitted on a requested role")
 	}
-	return serv.repos.TransferMoney(transfer)
+	entity, err := request_mappers.ToTransferEntitity(transfer)
+	if err != nil {
+		return err
+	}
+	return serv.repos.TransferMoney(*entity)
 }
 
 func (serv *BankAccountService) CloseBankAccount(accountIdentifNum entities.AccountIdenitificationNum, usrRole entities.UserRole) error {

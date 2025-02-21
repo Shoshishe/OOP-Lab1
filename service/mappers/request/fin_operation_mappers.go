@@ -15,3 +15,14 @@ func ToLoanEntity(model request.LoanModel) (*entities.Loan, error) {
 	}
 	return entity, nil
 }
+
+func ToTransferEntitity(model request.TransferModel) (*entities.Transfer, error) {
+	entity, err := entities.NewTransfer(
+		model.TransferOwnerId, model.SenderAccountNum, 
+		model.ReceiverAccountNum, model.SumOfTransfer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return entity, nil
+}

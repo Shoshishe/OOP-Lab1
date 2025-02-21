@@ -24,14 +24,15 @@ type tokenClaims struct {
 	id int
 }
 
+type roleAccess interface {
+	GetUserRole(userId int) (entities.UserRole, error)
+}
 type TokenAuth interface {
 	GenerateToken(fullName, password string) (string, error)
 	ParseToken(accessToken string) (int, error)
+	roleAccess
 }
 
-type RoleAccess interface {
-	GetUserRole(userId int) (entities.UserRole, error)
-}
 
 type Authorization interface {
 	AddUser(user request.UserSignUpModel) error
@@ -41,7 +42,7 @@ type Authorization interface {
 type AuthService struct {
 	Authorization
 	TokenAuth
-	RoleAccess
+	//RoleAccess
 	repos AuthorizationRepository
 }
 
