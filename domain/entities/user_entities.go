@@ -191,18 +191,3 @@ func (usr *User) MobilePhone() Phone {
 func (usr *User) RoleType() UserRole {
 	return usr.roleType
 }
-// func WithAdminRole(usr *User) {
-// 	usr.roleType = RoleAdmin
-// }
-
-// func WithManagerRole(usr *User) {
-// 	usr.roleType = RoleManager
-// }
-
-// func WithOperatorRole(usr *User) {
-// 	usr.roleType = RoleOperator
-// }
-
-// func WithOuterSpecialistRole(usr *User) {
-// 	usr.roleType = RoleOuterSpecialist
-// }

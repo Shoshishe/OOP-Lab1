@@ -6,11 +6,15 @@ import (
 	"main/repository/postgres"
 	"main/service"
 	"net/http"
+	"time"
+
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
 )
 
 func main() {
+	date, err := time.Parse(time.DateOnly, "0000-01-01");
+	print(date.AddDate(time.Now().Year(), int(time.Now().Month()) - 1, time.Now().Day() - 1).Format(time.DateOnly))
 	if err := initConfig(); err != nil {
 		log.Fatalf("Couldn't init config: %s", err.Error())
 	}

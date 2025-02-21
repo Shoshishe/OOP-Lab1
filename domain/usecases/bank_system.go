@@ -14,6 +14,7 @@ type BankAccount interface {
 	TransferMoney(transfer entities.Transfer) error
 	BlockBankAccount(accountIdenitificationNum entities.AccountIdenitificationNum) error
 	FreezeBankAccount(accountIdenitificationNum entities.AccountIdenitificationNum) error
+	CloseBankAccount(accountIdentificationNum entities.AccountIdenitificationNum) error
 }
 
 type Bank interface {
@@ -27,7 +28,7 @@ type Company interface {
 }
 
 type Client interface {
-	TakeCredit(bankIdentificationNum entities.BankIdentificationNum, duration int) error
+	TakeLoan(entities.Loan) error
 	CancelOwnOperation() error
 	CancelOperations(userId int) error
 	SendCreditsForPayment() error

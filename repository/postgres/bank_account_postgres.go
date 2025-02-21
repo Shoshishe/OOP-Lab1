@@ -76,6 +76,16 @@ func (bankAccountRepo *BankAccountPostgres) TransferMoney(transfer entities.Tran
 	tx.Commit()
 	return nil
 }
+
+func (bankAccountRepo *BankAccountPostgres) CloseBankAccount(accountIdentifNum entities.AccountIdenitificationNum) error {
+	query := fmt.Sprintf("DELETE FROM %s WHERE account_identif_num=$1",AccountsTable)
+	_, err := bankAccountRepo.db.Exec(query)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 func NewBankAccountPostgres(db *sql.DB) *BankAccountPostgres {
 	return &BankAccountPostgres{db: db}
 }

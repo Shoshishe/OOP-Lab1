@@ -14,6 +14,7 @@ type BankAccount interface {
 	PutMoney(amount entities.MoneyAmount, accountIdentificationNum entities.AccountIdenitificationNum, usrRole entities.UserRole) error
 	TakeMoney(amount entities.MoneyAmount, accountIdentificationNum entities.AccountIdenitificationNum, usrRole entities.UserRole) error
 	TransferMoney(transfer entities.Transfer, userRole entities.UserRole) error
+	CloseBankAccount(accountIdentificationNum entities.AccountIdenitificationNum, userRole entities.UserRole) error
 }
 type BankAccountService struct {
 	BankAccount
@@ -69,6 +70,13 @@ func (serv *BankAccountService) TransferMoney(transfer entities.Transfer, usrRol
 		return serviceErrors.NewRoleError("not permitted on a requested role")
 	}
 	return serv.repos.TransferMoney(transfer)
+}
+
+func (serv *BankAccountService) CloseBankAccount(accountIdentifNum entities.AccountIdenitificationNum, usrRole entities.UserRole) error {
+	if usrRole != entities.RoleUser {
+		return serviceErrors.NewRoleError("not permitted on a requested role")
+	}
+	return serv.repos.CloseBankAccount(accountIdentifNum)
 }
 
 func NewBankAccount(repos AccountRepository) *BankAccountService {

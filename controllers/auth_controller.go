@@ -13,10 +13,6 @@ func (controller *Controller) signUp(writer http.ResponseWriter, req *http.Reque
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err != nil {
-		newErrorResponse(writer, http.StatusBadRequest, err.Error()) 
-		return
-	}
 	err = controller.services.AddUser(input)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())

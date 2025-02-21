@@ -3,6 +3,7 @@ package entities
 import (
 	"errors"
 	domainErrors "main/domain/entities/domain_errors"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -11,29 +12,11 @@ type MoneyAmount = int64
 type BankName = string
 type BankIdentificationNum = string
 type CreditRate = decimal.Decimal
-type DayLength = int64
-
-type BankAccount struct {
-	amount                    MoneyAmount
-	accountIdenitificationNum AccountIdenitificationNum
-	bankFullName              BankName
-	bankIdentificationNum     BankIdentificationNum
-	status                    Status
-	outsideInfo               BankAccountOutside
-}
-
-type BankAccountOutside interface {
-	doesBankExist(bankIdentifNum BankIdentificationNum, bankFullName BankName) (bool, error)
-}
-
-type Status struct {
-	isBlocked bool
-	isFrozen  bool
-}
+type Date = time.Time
 
 type InstallmentPlan struct {
-	info     Credit
-	duration int
+	bankProviderName BankName
+	endOfTerm        Date
 }
 
 type PaymentRequest struct {
@@ -41,12 +24,137 @@ type PaymentRequest struct {
 	clientId int
 }
 
-type Credit struct {
+var threeMonths, _ = time.Parse(time.DateOnly, "0000-04-01")
+var sixMonths, _ = time.Parse(time.DateOnly, "0000-07-01")
+var twelveMonths, _ = time.Parse(time.DateOnly, "0001-01-01")
+var twentyFourMonths, _ = time.Parse(time.DateOnly, "0002-01-01")
+
+func AddDates(currentDate, addedValue time.Time) time.Time {
+	return currentDate.AddDate(addedValue.Year(), int(addedValue.Month())-1, addedValue.Day()-1)
+}
+
+type LoanOutside interface {
+	CheckIfLoanExists(loanId int) (bool, error)
+}
+type Loan struct {
+	loanId                    int
 	bankProviderName          BankName
 	accountIdenitificationNum AccountIdenitificationNum
 	rate                      CreditRate
-	principle                 MoneyAmount
-	period                    DayLength
+	loanAmount                MoneyAmount
+	endOfLoanTerm             Date
+	isAccepted				  bool
+	outsideInfo               LoanOutside
+}
+
+func (loan *Loan) LoanId() int {
+	return loan.loanId
+}
+
+func (loan *Loan) BankProviderName() BankName {
+	return loan.accountIdenitificationNum
+}
+
+func (loan *Loan) AccountIdenitificationNum() AccountIdenitificationNum {
+	return loan.accountIdenitificationNum
+}
+
+func (loan *Loan) Rate() CreditRate {
+	return loan.rate
+}
+
+func (loan *Loan) LoanAmount() MoneyAmount {
+	return loan.loanAmount
+}
+
+func (loan *Loan) EndOfLoanTerm() Date {
+	return loan.endOfLoanTerm
+}
+
+func (loan *Loan) IsAccepted() bool {
+	return loan.isAccepted
+}
+
+func NewLoan(bankProviderName BankName, accountNum AccountIdenitificationNum, rate CreditRate, loanAmount MoneyAmount, endOfLoanTerm Date) (*Loan, error) {
+	loan := &Loan{
+		bankProviderName:          bankProviderName,
+		accountIdenitificationNum: accountNum,
+		rate:                      rate,
+		loanAmount:                loanAmount,
+		endOfLoanTerm:             endOfLoanTerm,
+	}
+	err := loan.ValidateLoan()
+	if err != nil {
+		return nil, err
+	}
+	return loan, nil
+}
+
+func (loan *Loan) ValidateLoan() error {
+	err := errors.Join(
+		loan.ValidateAccountIdentifNum(),
+		loan.ValidateBankProviderName(),
+		loan.ValidateEndOfLoanTerm(),
+		loan.ValidateLoanAmount(),
+		loan.ValidateRate(),
+	)
+	return err
+}
+
+func (loan *Loan) ValidateBankProviderName() error {
+	var err error
+	if len(loan.bankProviderName) == 0 {
+		err = domainErrors.NewInvalidField("empty bank provider name")
+	}
+	return err
+}
+
+func (loan *Loan) ValidateAccountIdentifNum() error {
+	var err error
+	if len(loan.accountIdenitificationNum) == 0 {
+		err = domainErrors.NewInvalidField("empty account identif num")
+	}
+	return err
+}
+
+func (loan *Loan) ValidateRate() error {
+	var err error
+	if loan.rate.LessThan(decimal.New(1, 1)) {
+		err = domainErrors.NewInvalidField("invalid credit rate")
+	}
+	return err
+}
+
+func (loan *Loan) ValidateLoanAmount() error {
+	var err error
+	if loan.loanAmount <= 0 {
+		err = domainErrors.NewInvalidField("invalid loan amount")
+	}
+	return err
+}
+
+func (loan *Loan) ValidateEndOfLoanTerm() error {
+	exists, err := loan.outsideInfo.CheckIfLoanExists(loan.loanId)
+	if err != nil {
+		return err
+	}
+	if loan.endOfLoanTerm.Before(time.Now().Truncate(time.Hour * 24)) {
+		if !exists {
+			switch loan.endOfLoanTerm {
+			case AddDates(time.Now().Truncate(time.Hour*24), threeMonths):
+			case AddDates(time.Now().Truncate(time.Hour*24), sixMonths):
+			case AddDates(time.Now().Truncate(time.Hour*24), twelveMonths):
+			case AddDates(time.Now().Truncate(time.Hour*24), twentyFourMonths):
+			default:
+				if !loan.endOfLoanTerm.After(AddDates(time.Now().Truncate(time.Hour*24), twentyFourMonths)) {
+					return domainErrors.NewInvalidField("unacceptable loan term")
+				}
+			}
+		} else {
+			err = domainErrors.NewInvalidField("end of loan is before the current time")
+		}
+	}
+	return err
 }
 
 type Transfer struct {
@@ -99,83 +207,6 @@ func (transfer *Transfer) ValidateMoneyAmount() error {
 		return domainErrors.NewInvalidField("not enough money for a transfer")
 	}
 	return nil
-}
-
-func NewBankAccount(amount MoneyAmount, accountIdentifNum AccountIdenitificationNum, bankFullName BankName, bankIdentifNum BankIdentificationNum) (*BankAccount, error) {
-	account := &BankAccount{
-		amount:                    amount,
-		accountIdenitificationNum: accountIdentifNum,
-		bankFullName:              bankFullName,
-		bankIdentificationNum:     bankIdentifNum,
-		status:                    Status{},
-	}
-	if err := account.ValidateBankAccount(); err != nil {
-		return nil, err
-	}
-	return account, nil
-}
-
-func (account *BankAccount) ValidateBankAccount() error {
-	err := errors.Join(
-		account.ValidateMoneyAmount(),
-		account.ValidateStatus(),
-		account.ValidateFullName(),
-		account.ValidateBank(),
-	)
-	return err
-}
-
-func (account *BankAccount) ValidateMoneyAmount() error {
-	if account.MoneyAmount() < 0 {
-		return domainErrors.NewInvalidField("invalid money amount")
-	}
-	return nil
-}
-
-func (account *BankAccount) ValidateStatus() error {
-	if account.status.isBlocked && account.status.isFrozen {
-		return domainErrors.NewInvalidField("invalid account statuses")
-	}
-	return nil
-}
-
-func (account *BankAccount) ValidateFullName() error {
-	if len(account.bankFullName) == 0 {
-		return domainErrors.NewInvalidField("invalid bank full name")
-	}
-	return nil
-}
-
-func (account *BankAccount) ValidateBank() error {
-	exists, err := account.outsideInfo.doesBankExist(account.bankIdentificationNum, account.bankFullName)
-	if !exists {
-		return domainErrors.NewInvalidField("such bank doesn't exist")
-	}
-	return err
-}
-
-func (account *BankAccount) MoneyAmount() MoneyAmount {
-	return account.amount
-}
-
-func (account *BankAccount) AccountIdenitificationNum() AccountIdenitificationNum {
-	return account.accountIdenitificationNum
-}
-
-func (account *BankAccount) BankFullName() BankName {
-	return account.bankFullName
-}
-
-func (account *BankAccount) BankIdentificationNum() BankIdentificationNum {
-	return account.bankIdentificationNum
-}
-
-func (account BankAccount) IsFrozen() bool {
-	return account.status.isFrozen
-}
-
-func (account BankAccount) IsBlocked() bool {
-	return account.status.isBlocked
 }
 
 func (*Transfer) NewTransfer(transferOwnerId int, SenderNum AccountIdenitificationNum, ReceiverNum AccountIdenitificationNum, Amount MoneyAmount) (*Transfer, error) {
