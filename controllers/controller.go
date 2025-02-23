@@ -23,10 +23,6 @@ func NewMiddleware(authMiddleware service.TokenAuth) *Middleware {
 	}
 }
 
-type BankController struct {
-	service    service.Bank
-	middleware Middleware
-}
 
 func (controller *Controller) RegisterRoutes(mux *http.ServeMux) {
 	controller.authController.registerAuthorization(mux)
@@ -53,6 +49,8 @@ func (accountController *AccountController) registerAccounts(mux *http.ServeMux)
 	mux.HandleFunc("PUT /api/bank_account/close/{account_identif_num}", accountController.closeAccount)
 	mux.HandleFunc("PUT /api/bank_account/transfer/", accountController.transferMoney)
 }
+
+
 
 func NewController(serv *service.Service) *Controller {
 	middleware := NewMiddleware(serv.TokenAuth)

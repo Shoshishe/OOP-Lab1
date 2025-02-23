@@ -69,7 +69,7 @@ func (serv *BankAccountService) TransferMoney(transfer request.TransferModel, us
 	if usrRole != entities.RoleUser {
 		return serviceErrors.NewRoleError("not permitted on a requested role")
 	}
-	entity, err := request_mappers.ToTransferEntitity(transfer)
+	entity, err := request_mappers.ToTransferEntitity(transfer, entities.NewUserAccountChecker(serv.repos))
 	if err != nil {
 		return err
 	}

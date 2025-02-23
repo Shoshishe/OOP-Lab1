@@ -57,7 +57,7 @@ func (bankAccountRepo *BankAccountPostgres) TransferMoney(transfer entities.Tran
 		tx.Rollback()
 		return err
 	}
-	if moneyAmount < int(transfer.SumOfTransfer) {
+	if moneyAmount < int(transfer.SumOfTransfer()) {
 		tx.Rollback()
 		return errors.New("insufficient money amount")
 	}

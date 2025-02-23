@@ -26,19 +26,9 @@ func (middleware *Middleware) userIdentity(req *http.Request) (int, error) {
 }
 
 func (middleware *Middleware) userRole(req *http.Request) (entities.UserRole, error) {
-	var userId int
-	var err error
-	header := req.Header.Get(authorizationHeader)
-	if header == "" {
-		return 0, errors.New("empty header")
-	}
-	headerParts := strings.Split(header, " ")
-	if len(headerParts) != 2 {
-		return 0, errors.New("invalid authorization header")
-	}
-	userId, err = middleware.authMiddleware.ParseToken(headerParts[1])
+	userId, err := middleware.userIdentity(req)
 	if err != nil {
-		return 0, err
+		return 0,err
 	}
 	role, err :=  middleware.authMiddleware.GetUserRole(userId)
 	if err != nil {

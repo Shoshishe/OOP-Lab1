@@ -9,7 +9,7 @@ type PasportInfoModel struct {
 	PasportSeries string `json:"pasport_series"`
 	PasportNum    string `json:"pasport_num"`
 }
-type UserSignUpModel struct {
+type ClientSignUpModel struct {
 	FullName      string `json:"full_name" db:"full_name"`
 	Pasport       string `json:"pasport"`
 	MobilePhone   string `json:"phone" db:"phone_number"`

@@ -2,10 +2,9 @@ package entities
 
 import (
 	"errors"
+	"github.com/shopspring/decimal"
 	domainErrors "main/domain/entities/domain_errors"
 	"time"
-
-	"github.com/shopspring/decimal"
 )
 
 type MoneyAmount = int64
@@ -13,42 +12,171 @@ type BankName = string
 type BankIdentificationNum = string
 type CreditRate = decimal.Decimal
 type Date = time.Time
+type Count = int16
+
+type PaymentRequest struct {
+	amount     MoneyAmount
+	accountNum AccountIdenitificationNum
+	clientId   int
+	companyId  int
+}
+
+func (req *PaymentRequest) Amount() MoneyAmount {
+	return req.amount
+}
+
+func (req *PaymentRequest) AccountNum() AccountIdenitificationNum {
+	return req.accountNum
+}
+
+func (req *PaymentRequest) ClientId() int {
+	return req.clientId
+}
+
+func (req *PaymentRequest) CompanyId() int {
+	return req.companyId
+}
+
+func NewPaymentRequest(amount MoneyAmount, accountNum string, clientId int, companyId int) (*PaymentRequest, error) {
+	req := &PaymentRequest{
+		amount:     amount,
+		accountNum: accountNum,
+		clientId:   clientId,
+		companyId:  companyId,
+	}
+	err := req.ValidateRequest()
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func (req *PaymentRequest) ValidateRequest() error {
+	return errors.Join(
+		req.ValidateAccountNum(),
+		req.ValidateAmount(),
+		req.ValidateId(),
+	)
+}
+
+func (req *PaymentRequest) ValidateAmount() error {
+	if req.amount <= 0 {
+		return domainErrors.NewInvalidField("invalid requested amount")
+	}
+	return nil
+}
+
+func (req *PaymentRequest) ValidateAccountNum() error {
+	if len(req.accountNum) == 0 {
+		return domainErrors.NewInvalidField("invalid account number")
+	}
+	return nil
+}
+
+func (req *PaymentRequest) ValidateId() error {
+	if req.clientId <= 0 || req.companyId <= 0 {
+		return domainErrors.NewInvalidField("incorrect user id")
+	}
+	return nil
+}
 
 type InstallmentPlan struct {
 	bankProviderName BankName
+	amountForPayment MoneyAmount
+	countOfPayments  Count
+	startOfTerm      Date
 	endOfTerm        Date
+	isAccepted       bool
 }
 
-type PaymentRequest struct {
-	amount   int
-	clientId int
+func NewInstallmentPlan(bankProviderName BankName, amountForPayment MoneyAmount, countOfPayments Count, startOfTerm Date, endOfTerm Date) (*InstallmentPlan, error) {
+	planEntity := &InstallmentPlan{
+		bankProviderName: bankProviderName,
+		amountForPayment: amountForPayment,
+		countOfPayments:  countOfPayments,
+		startOfTerm:      startOfTerm,
+		endOfTerm:        endOfTerm,
+	}
+	err := planEntity.ValidatePlan()
+	if err != nil {
+		return nil, err
+	}
+	return planEntity, nil
 }
 
-var threeMonths, _ = time.Parse(time.DateOnly, "0000-04-01")
-var sixMonths, _ = time.Parse(time.DateOnly, "0000-07-01")
-var twelveMonths, _ = time.Parse(time.DateOnly, "0001-01-01")
-var twentyFourMonths, _ = time.Parse(time.DateOnly, "0002-01-01")
-
-func AddDates(currentDate, addedValue time.Time) time.Time {
-	return currentDate.AddDate(addedValue.Year(), int(addedValue.Month())-1, addedValue.Day()-1)
+func (plan *InstallmentPlan) ValidatePlan() error {
+	err := errors.Join(
+		plan.ValidateBankProviderName(),
+		plan.ValidateCountOfPayments(),
+		plan.ValidateTermDates(),
+		plan.ValidateMoneyAmount(),
+	)
+	return err
 }
 
-type LoanOutside interface {
-	CheckIfLoanExists(loanId int) (bool, error)
+func (plan *InstallmentPlan) ValidateTermDates() error {
+	if plan.startOfTerm.Truncate(24 * time.Hour).Equal(plan.endOfTerm.Truncate(24 * time.Hour)) {
+		return domainErrors.NewInvalidField("term start and end are the same")
+	}
+	if plan.startOfTerm.Truncate(24 * time.Hour).After(plan.endOfTerm.Truncate(24 * time.Hour)) {
+		return domainErrors.NewInvalidField("term start is after the term end")
+	}
+	return nil
 }
+
+func (plan *InstallmentPlan) ValidateCountOfPayments() error {
+	if plan.countOfPayments < 1 {
+		return domainErrors.NewInvalidField("invalid count of payments")
+	}
+	return nil
+}
+
+func (plan *InstallmentPlan) ValidateBankProviderName() error {
+	if len(plan.bankProviderName) == 0 {
+		return domainErrors.NewInvalidField("empty bank provider name")
+	}
+	return nil
+}
+
+func (plan *InstallmentPlan) ValidateMoneyAmount() error {
+	if plan.amountForPayment <= 0 {
+		return domainErrors.NewInvalidField("invalid payment amount")
+	}
+	return nil
+}
+
+func (plan *InstallmentPlan) BankProviderName() string {
+	return plan.bankProviderName
+}
+
+func (plan *InstallmentPlan) AmountForPayment() int {
+	return int(plan.amountForPayment)
+}
+
+func (plan *InstallmentPlan) CountOfPayments() int16 {
+	return plan.countOfPayments
+}
+
+func (plan *InstallmentPlan) StartOfTerm() Date {
+	return plan.startOfTerm
+}
+
+func (plan *InstallmentPlan) EndOfTerm() Date {
+	return plan.endOfTerm
+}
+
+func (plan *InstallmentPlan) IsAccepted() bool {
+	return plan.isAccepted
+}
+
 type Loan struct {
-	loanId                    int
 	bankProviderName          BankName
 	accountIdenitificationNum AccountIdenitificationNum
 	rate                      CreditRate
 	loanAmount                MoneyAmount
+	startOfLoanTerm           Date
 	endOfLoanTerm             Date
-	isAccepted				  bool
-	outsideInfo               LoanOutside
-}
-
-func (loan *Loan) LoanId() int {
-	return loan.loanId
+	isAccepted                bool
 }
 
 func (loan *Loan) BankProviderName() BankName {
@@ -67,6 +195,10 @@ func (loan *Loan) LoanAmount() MoneyAmount {
 	return loan.loanAmount
 }
 
+func (loan *Loan) StartOfLoanTerm() Date {
+	return loan.startOfLoanTerm
+}
+
 func (loan *Loan) EndOfLoanTerm() Date {
 	return loan.endOfLoanTerm
 }
@@ -75,12 +207,13 @@ func (loan *Loan) IsAccepted() bool {
 	return loan.isAccepted
 }
 
-func NewLoan(bankProviderName BankName, accountNum AccountIdenitificationNum, rate CreditRate, loanAmount MoneyAmount, endOfLoanTerm Date) (*Loan, error) {
+func NewLoan(bankProviderName BankName, accountNum AccountIdenitificationNum, rate CreditRate, loanAmount MoneyAmount, startOfLoanTerm Date, endOfLoanTerm Date) (*Loan, error) {
 	loan := &Loan{
 		bankProviderName:          bankProviderName,
 		accountIdenitificationNum: accountNum,
 		rate:                      rate,
 		loanAmount:                loanAmount,
+		startOfLoanTerm:           startOfLoanTerm,
 		endOfLoanTerm:             endOfLoanTerm,
 	}
 	err := loan.ValidateLoan()
@@ -94,7 +227,7 @@ func (loan *Loan) ValidateLoan() error {
 	err := errors.Join(
 		loan.ValidateAccountIdentifNum(),
 		loan.ValidateBankProviderName(),
-		loan.ValidateEndOfLoanTerm(),
+		loan.ValidateLoanTerm(),
 		loan.ValidateLoanAmount(),
 		loan.ValidateRate(),
 	)
@@ -133,88 +266,230 @@ func (loan *Loan) ValidateLoanAmount() error {
 	return err
 }
 
-func (loan *Loan) ValidateEndOfLoanTerm() error {
-	exists, err := loan.outsideInfo.CheckIfLoanExists(loan.loanId)
-	if err != nil {
-		return err
-	}
-	if loan.endOfLoanTerm.Before(time.Now().Truncate(time.Hour * 24)) {
-		if !exists {
-			switch loan.endOfLoanTerm {
-			case AddDates(time.Now().Truncate(time.Hour*24), threeMonths):
-			case AddDates(time.Now().Truncate(time.Hour*24), sixMonths):
-			case AddDates(time.Now().Truncate(time.Hour*24), twelveMonths):
-			case AddDates(time.Now().Truncate(time.Hour*24), twentyFourMonths):
-			default:
-				if !loan.endOfLoanTerm.After(AddDates(time.Now().Truncate(time.Hour*24), twentyFourMonths)) {
-					return domainErrors.NewInvalidField("unacceptable loan term")
-				}
+func isThreeMonthsApart(startDate time.Time, endDate time.Time) bool {
+	if startDate.Day() == endDate.Day() {
+		if startDate.Year() == endDate.Year() {
+			if endDate.Month()-startDate.Month() == 3 {
+				return true
 			}
-		} else {
-			err = domainErrors.NewInvalidField("end of loan is before the current time")
+		}
+		return false
+	}
+	return false
+}
+
+func isSixMonthsApart(startDate time.Time, endDate time.Time) bool {
+	if startDate.Day() == endDate.Day() {
+		if startDate.Year() == endDate.Year() {
+			if endDate.Month()-startDate.Month() == 6 {
+				return true
+			}
 		}
 	}
-	return err
+	return false
 }
 
-type Transfer struct {
-	transferOwnerId    int
-	SenderAccountNum   AccountIdenitificationNum
-	SumOfTransfer      MoneyAmount
-	ReceiverAccountNum AccountIdenitificationNum
-	outsideInfo        TransferOutside
-}
-
-type TransferOutside interface {
-	doesAccountBelongTo(accountNum AccountIdenitificationNum, userId int) (bool, error)
-	accountMoneyAmount(accountNum AccountIdenitificationNum, userId int) (MoneyAmount, error)
-}
-
-func (trasnfer *Transfer) ValidateTransfer() error {
-	return errors.Join(
-		trasnfer.ValidateMoneyAmount(),
-		trasnfer.ValidateAccounts(),
-	)
-}
-
-func (transfer *Transfer) ValidateAccounts() error {
-	senderBelonging, err := transfer.outsideInfo.doesAccountBelongTo(transfer.SenderAccountNum, transfer.transferOwnerId)
-	if !senderBelonging {
-		return domainErrors.NewNotPermitted("sender account does not belong to user")
+func isYearApart(startDate time.Time, endDate time.Time) bool {
+	if startDate.Day() == endDate.Day() {
+		if startDate.Month() == endDate.Month() {
+			if endDate.Year()-startDate.Year() == 1 {
+				return true
+			}
+		}
 	}
-	if err != nil {
-		return err
+	return false
+}
+
+func isTwoYearsApart(startDate time.Time, endDate time.Time) bool {
+	if startDate.Day() == endDate.Day() {
+		if startDate.Month() == endDate.Month() {
+			if endDate.Year()-startDate.Year() == 2 {
+				return true
+			}
+		}
 	}
-	receiverBelonging, err := transfer.outsideInfo.doesAccountBelongTo(transfer.SenderAccountNum, transfer.transferOwnerId)
-	if !receiverBelonging {
-		return domainErrors.NewNotPermitted("receiver account does not belong to user")
+	return false
+}
+
+func IsMoreThanTwoYearsApart(startDate time.Time, endDate time.Time) bool {
+	if endDate.Year()-startDate.Year() == 2 {
+		if endDate.Month() > startDate.Month() {
+			return true
+		} else if endDate.Month() < startDate.Month() {
+			return false
+		} else {
+			if endDate.Day() > startDate.Day() {
+				return true
+			} else {
+				return false
+			}
+		}
+	} else if endDate.Year()-startDate.Year() > 2 {
+		return true
 	}
-	if err != nil {
-		return err
+	return false
+}
+
+func (loan *Loan) ValidateLoanTerm() error {
+	if !(isThreeMonthsApart(loan.startOfLoanTerm, loan.endOfLoanTerm) || isSixMonthsApart(loan.startOfLoanTerm, loan.endOfLoanTerm) ||
+		isYearApart(loan.startOfLoanTerm, loan.endOfLoanTerm) || isTwoYearsApart(loan.startOfLoanTerm, loan.endOfLoanTerm) ||
+		IsMoreThanTwoYearsApart(loan.startOfLoanTerm, loan.endOfLoanTerm)) {
+		return domainErrors.NewInvalidField("invalid loan terms")
 	}
 	return nil
 }
 
-func (transfer *Transfer) ValidateMoneyAmount() error {
-	if transfer.SumOfTransfer < 0 {
-		return domainErrors.NewInvalidField("invalid money amount")
+type Validator interface {
+	ValidateAccount(transfer *Transfer) error
+	ValidateMoneyAmount(transfer *Transfer) error
+}
+
+type UserTransferOutside interface {
+	doesAccountBelongToUser(accountNum AccountIdenitificationNum, userId int) (bool, error)
+	doesAccountExist(AccountIdenitificationNum) (bool, error)
+	accountMoneyAmount(accountNum AccountIdenitificationNum, userId int) (MoneyAmount, error)
+}
+type userAccountChecker struct {
+	Validator
+	outsideInfo UserTransferOutside
+}
+
+func (checker *userAccountChecker) ValidateAccount(transfer *Transfer) error {
+	if transfer.senderAccountNum == transfer.receiverAccountNum {
+		return domainErrors.NewInvalidField("sender account is equal to receiver account")
 	}
-	Money, err := transfer.outsideInfo.accountMoneyAmount(transfer.SenderAccountNum, transfer.transferOwnerId)
+	senderBelonging, err := checker.outsideInfo.doesAccountBelongToUser(transfer.SenderAccountNum(), transfer.TransferOwnerId())
 	if err != nil {
 		return err
 	}
-	if Money < transfer.SumOfTransfer {
+	if !senderBelonging {
+		return domainErrors.NewInvalidField("account does not belong to sender")
+	}
+	receiverExists, err := checker.outsideInfo.doesAccountExist(transfer.ReceiverAccountNum())
+	if err != nil {
+		return err
+	}
+	if !receiverExists {
+		return domainErrors.NewInvalidField("receiver acc does not exist")
+	}
+	return nil
+}
+
+func NewUserAccountChecker(outsideInfo UserTransferOutside) *userAccountChecker {
+	return &userAccountChecker{outsideInfo: outsideInfo}
+}
+
+type CompanyTransferOutside interface {
+	DoesAccountBelongToOuterCompany(accountNum AccountIdenitificationNum, specialistId int) (bool, error)
+	DoesAccountBelongToNonOuterUser(accountNum AccountIdenitificationNum, specialistId int) (bool, error)
+	DoesAccountBelongToUser(AccountIdenitificationNum) (bool, error)
+	AccountMoneyAmount(accountNum AccountIdenitificationNum, userId int) (MoneyAmount, error)
+}
+
+type companyAccountChecker struct {
+	Validator
+	outsideInfo CompanyTransferOutside
+}
+
+func (checker *companyAccountChecker) ValidateAccount(transfer *Transfer) error {
+	if transfer.senderAccountNum == transfer.receiverAccountNum {
+		return domainErrors.NewInvalidField("sender account is equal to receiver account")
+	}
+	belongsToSender, err := checker.outsideInfo.DoesAccountBelongToUser(transfer.SenderAccountNum())
+	if err != nil {
+		return err
+	}
+	if !belongsToSender {
+		return domainErrors.NewInvalidField("sender account does not belong to sender")
+	}
+	belongsToCompany, err := checker.outsideInfo.DoesAccountBelongToOuterCompany(transfer.SenderAccountNum(), transfer.TransferOwnerId())
+	if err != nil {
+		return err
+	}
+	if !belongsToCompany {
+		belongsToOuterUser, err := checker.outsideInfo.DoesAccountBelongToNonOuterUser(transfer.SenderAccountNum(), transfer.TransferOwnerId())
+		if err != nil {
+			return err
+		}
+		if !belongsToOuterUser {
+			return err
+		}
+	} else {
+		return nil
+	}
+	return nil
+}
+
+func NewCompanyAccountChecker(outsideInfo CompanyTransferOutside) *companyAccountChecker {
+	return &companyAccountChecker{outsideInfo: outsideInfo}
+}
+
+type Transfer struct {
+	transferOwnerId    int
+	senderAccountNum   AccountIdenitificationNum
+	sumOfTransfer      MoneyAmount
+	receiverAccountNum AccountIdenitificationNum
+	validator          Validator
+}
+
+func (trasnfer *Transfer) ValidateTransfer() error {
+	return errors.Join(
+		trasnfer.validator.ValidateMoneyAmount(trasnfer),
+		trasnfer.validator.ValidateAccount(trasnfer),
+	)
+}
+
+func (checker userAccountChecker) ValidateMoneyAmount(transfer *Transfer) error {
+	if transfer.sumOfTransfer < 0 {
+		return domainErrors.NewInvalidField("invalid money amount")
+	}
+	Money, err := checker.outsideInfo.accountMoneyAmount(transfer.senderAccountNum, transfer.transferOwnerId)
+	if err != nil {
+		return err
+	}
+	if Money < transfer.sumOfTransfer {
 		return domainErrors.NewInvalidField("not enough money for a transfer")
 	}
 	return nil
 }
 
-func NewTransfer(transferOwnerId int, SenderNum AccountIdenitificationNum, ReceiverNum AccountIdenitificationNum, Amount MoneyAmount) (*Transfer, error) {
+func (checker companyAccountChecker) ValidateMoneyAmount(transfer *Transfer) error {
+	if transfer.sumOfTransfer < 0 {
+		return domainErrors.NewInvalidField("invalid money amount")
+	}
+	Money, err := checker.outsideInfo.AccountMoneyAmount(transfer.senderAccountNum, transfer.transferOwnerId)
+	if err != nil {
+		return err
+	}
+	if Money < transfer.sumOfTransfer {
+		return domainErrors.NewInvalidField("not enough money for a transfer")
+	}
+	return nil
+}
+
+func (transfer *Transfer) TransferOwnerId() int {
+	return transfer.transferOwnerId
+}
+
+func (transfer *Transfer) SenderAccountNum() string {
+	return transfer.senderAccountNum
+}
+
+func (transfer *Transfer) ReceiverAccountNum() string {
+	return transfer.receiverAccountNum
+}
+
+func (transfer *Transfer) SumOfTransfer() int {
+	return int(transfer.sumOfTransfer)
+}
+
+func NewTransfer(transferOwnerId int, SenderNum AccountIdenitificationNum, ReceiverNum AccountIdenitificationNum, Amount MoneyAmount, checker Validator) (*Transfer, error) {
 	transferValue := &Transfer{
 		transferOwnerId:    transferOwnerId,
-		SenderAccountNum:   SenderNum,
-		ReceiverAccountNum: ReceiverNum,
-		SumOfTransfer:      Amount,
+		senderAccountNum:   SenderNum,
+		receiverAccountNum: ReceiverNum,
+		sumOfTransfer:      Amount,
+		validator:          checker,
 	}
 	err := transferValue.ValidateTransfer()
 	if err != nil {

@@ -29,9 +29,8 @@ type Company interface {
 
 type Client interface {
 	TakeLoan(entities.Loan) error
-	CancelOwnOperation() error
-	CancelOperations(userId int) error
-	SendCreditsForPayment() error
+	TakeInstallmentPlan(entities.InstallmentPlan) error
+	SendCreditsForPayment(entities.PaymentRequest) error
 }
 
 type Operator interface {
@@ -46,10 +45,9 @@ type Manager interface {
 	CancelOuterWorkerOperation(operationId int) error
 }
 
-type OuterWorker interface {
-	SendInfoForPayment(userId int) error
-	UserTransferRequest(userId, amount int) (int, error)
-	CompanyTransferRequest(userId, amount int) error
+type OuterSpecialist interface {
+	SendInfoForPayment(entities.PaymentRequest) error
+	TransferRequest(transfer entities.Transfer) error
 }
 
 type Admin interface {

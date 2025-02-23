@@ -9,7 +9,7 @@ type CompanyType = string
 type Adress = string
 type Name = string
 type BankType = string
-type AccountIdenitificationNum = string
+type PayersAccountNumber = string
 
 const (
 	EmissionBank               = "emission_bank"
@@ -34,7 +34,7 @@ type Company struct {
 	id                    int
 	legalName             Name
 	legalAdress           Adress
-	payersAccountNumber   AccountIdenitificationNum
+	payersAccountNumber   PayersAccountNumber
 	companyType           CompanyType
 	bankIdentificationNum BankIdentificationNum
 	outsideInfo           CompanyOutside

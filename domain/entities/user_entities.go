@@ -66,14 +66,52 @@ type User struct {
 	outsideInfo UserOutside
 }
 
-func NewUser(outsideInfo UserOutside, options ...func(*User)) (*User, error) {
+func NewUser(outsideInfo UserOutside, password string, email string, options ...func(*User)) (*User, error) {
 	usr := &User{outsideInfo: outsideInfo}
 	usr.roleType = RolePendingUser
 	for _, opt := range options {
 		opt(usr)
 	}
-	if err := usr.ValidateFullInput(); err != nil {
-		return nil, err
+	switch usr.RoleType() {
+	case RolePendingUser:
+		if err := usr.ValidateFullInput(); err != nil {
+			return nil, err
+		}
+	case RoleAdmin:	
+		if err := errors.Join(
+			usr.ValidateEmail(),
+			usr.ValidatePassword(),
+			usr.ValidateFullName(),
+		); err != nil {
+			return nil, err
+		}
+	case RoleManager: 
+		if err := errors.Join(
+			usr.ValidateEmail(),
+			usr.ValidatePassword(),
+			usr.ValidateFullName(),
+		); err != nil {
+			return nil, err
+		}
+	case RoleOperator: 	
+		if err := errors.Join(
+			usr.ValidateEmail(),
+			usr.ValidateFullName(),
+			usr.ValidatePassword(),
+		); err != nil {
+			return nil, err
+		}
+	case RoleOuterSpecialist:
+		if err := errors.Join(
+			usr.ValidateEmail(),
+			usr.ValidateFullName(),
+			usr.ValidatePassword(),
+			usr.ValidatePassport(),
+		); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, domainErrors.NewNotPermitted("incorrect role")	
 	}
 	return usr, nil
 }
@@ -85,6 +123,7 @@ func (usr *User) ValidateFullInput() error {
 		usr.ValidatePassword(),
 		usr.ValidatePhone(),
 		usr.ValidateRole(),
+		usr.ValidateFullName(),
 	)
 	return err
 }
@@ -124,16 +163,11 @@ func (usr *User) ValidatePhone() error {
 	return nil
 }
 
-func WithPassword(password Password) func(usr *User) {
-	return func(usr *User) {
-		usr.password = password
+func (usr *User) ValidateFullName() error {
+	if len(usr.fullName) == 0 {
+		return domainErrors.NewInvalidField("invalid full name")
 	}
-}
-
-func WithEmail(email Email) func(usr *User) {
-	return func(usr *User) {
-		usr.email = email
-	}
+	return nil
 }
 
 func WithPhone(phone Phone) func(usr *User) {
@@ -157,6 +191,12 @@ func WithPasportSeries(series Series) func(usr *User) {
 func WithPasportNum(pasportNum IdentifNum) func(usr *User) {
 	return func(usr *User) {
 		usr.pasport.passportNum = pasportNum
+	}
+}
+
+func WithUserRole(usrRole UserRole) (func (usr *User)) {
+	return func(usr *User) {
+		usr.roleType = usrRole
 	}
 }
 

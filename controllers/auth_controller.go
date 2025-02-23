@@ -20,7 +20,7 @@ func NewAuthController(authService service.Authorization, tokenService service.T
 }
 
 func (controller *AuthController) signUp(writer http.ResponseWriter, req *http.Request) {
-	var input request.UserSignUpModel
+	var input request.ClientSignUpModel
 	err := json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())

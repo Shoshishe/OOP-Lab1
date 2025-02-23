@@ -32,10 +32,11 @@ type TokenAuth interface {
 	ParseToken(accessToken string) (int, error)
 	roleAccess
 }
-
-
 type Authorization interface {
-	AddUser(user request.UserSignUpModel) error
+	AddUser(user request.ClientSignUpModel) error
+	// AddAdmin(admin request.AdminSignUpModel) error
+	// AddManager(manager request.ManagerSignUpModel) error 
+	// AddOuterSpecialist(manager request.ManagerSignUpModel) error
 	GetUser(username, password string) (*response.UserAuthModel, error)
 }
 
@@ -46,7 +47,7 @@ type AuthService struct {
 	repos AuthorizationRepository
 }
 
-func (serv *AuthService) AddUser(user request.UserSignUpModel) error {
+func (serv *AuthService) AddUser(user request.ClientSignUpModel) error {
 	user.Password = utils.GenerateHashedPassword(user.Password)
 	userEntity, err := request_mappers.ToUserEntitiy(user, serv.repos)
 	if err != nil {

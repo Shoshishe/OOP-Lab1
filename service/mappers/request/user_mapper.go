@@ -6,11 +6,9 @@ import (
 	"main/utils"
 )
 
-func ToUserEntitiy(input request.UserSignUpModel, outsideInterface entities.UserOutside) (*entities.User, error) {
-	usr, err := entities.NewUser(outsideInterface,
-		entities.WithEmail(input.Email),
+func ToUserEntitiy(input request.ClientSignUpModel, outsideInterface entities.UserOutside) (*entities.User, error) {
+	usr, err := entities.NewUser(outsideInterface, utils.GenerateHashedPassword(input.Password), input.Email,
 		entities.WithFullName(input.FullName),
-		entities.WithPassword(utils.GenerateHashedPassword(input.Password)),
 		entities.WithPhone(input.MobilePhone),
 		entities.WithPasportSeries(input.PasportSeries),
 		entities.WithPasportNum(input.PasportNum),

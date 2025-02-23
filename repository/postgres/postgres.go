@@ -9,6 +9,12 @@ const (
 	UsersTable = "users"
 	BanksTable = "banks"
 	AccountsTable = "accounts"
+	InstallmentsTable = "installments"
+	LoansTable = "loans"
+	PaymentRequestsTable = "requests"
+	TransfersTable = "transfers"
+	CompaniesTable = "companies"
+	CompaniesWorkersTable = "companies_workers"
 	BanksPerRequestLimit = 50
 )
 

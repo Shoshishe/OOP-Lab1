@@ -5,6 +5,8 @@ import (
 	domainErrors "main/domain/entities/domain_errors"
 )
 
+type AccountIdenitificationNum = string
+
 type BankAccount struct {
 	amount                    MoneyAmount
 	accountIdenitificationNum AccountIdenitificationNum
