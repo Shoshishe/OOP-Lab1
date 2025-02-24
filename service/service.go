@@ -1,69 +1,27 @@
 package service
 
 import (
-	"main/domain/entities"
-	"main/domain/usecases"
+	"main/service/repository"
+	serviceInterfaces "main/service/service_interfaces"
 )
 
 type Service struct {
-	AuthService Authorization
-	BankServ    Bank
-	AccountServ BankAccount
+	AuthService serviceInterfaces.Authorization
+	BankServ    serviceInterfaces.Bank
+	AccountServ serviceInterfaces.BankAccount
 	//	UsersServ 	Users
-	TokenAuth
+	serviceInterfaces.TokenAuth
 }
 
 type Repository struct {
-	AuthRepos        AuthorizationRepository
-	BankRepos        BankRepository
-	BankAccountRepos AccountRepository
-	UserRepos        UserRepository
-}
-type AuthorizationRepository interface {
-	usecases.Authorization
-	roleAccess
-	entities.UserOutside
+	AuthRepos        repository.AuthorizationRepository
+	BankRepos        repository.BankRepository
+	BankAccountRepos repository.AccountRepository
+	UserRepos        repository.UserRepository
 }
 
-type BankRepository interface {
-	usecases.Bank
-	entities.CompanyOutside
-}
 
-type AccountRepository interface {
-	usecases.BankAccount
-	entities.UserTransferOutside
-}
-
-type ClientRepository interface {
-	usecases.Client
-}
-
-type AdminRepository interface {
-	usecases.Admin
-}
-
-type ManagerRepository interface {
-	usecases.Manager
-}
-
-type OperatorRepository interface {
-	usecases.Operator
-}
-
-type OuterSpecialistRepository interface {
-	usecases.OuterSpecialist
-	entities.CompanyTransferOutside
-}
-type UserRepository interface {
-	ClientRepository
-	AdminRepository
-	OperatorRepository
-	OuterSpecialistRepository
-	ManagerRepository
-}
-
-func NewRepository(authRepos AuthorizationRepository, bankRepos BankRepository, accountRepos AccountRepository) *Repository {
+func NewRepository(authRepos repository.AuthorizationRepository, bankRepos repository.BankRepository, accountRepos repository.AccountRepository) *Repository {
 	return &Repository{
 		AuthRepos:        authRepos,
 		BankRepos:        bankRepos,

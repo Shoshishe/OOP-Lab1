@@ -3,12 +3,13 @@ package userPostgres
 import (
 	"database/sql"
 	"fmt"
-	"main/service"
+	"main/repository/postgres"
+	"main/service/repository"
 )
 
 type ManagerPostgres struct {
 	operator OperatorPostgres
-	service.ManagerRepository
+	repository.ManagerRepository
 	db *sql.DB
 }
 
@@ -18,7 +19,7 @@ func (repos *ManagerPostgres) CancelOuterWorkerOperation(operationId int) error{
 }
 
 func (repos *ManagerPostgres) ApproveCredit(requestId int) error {
-	query := fmt.Sprintf("UPDATE %s SET is_approved=true WHERE request_id=$1")
+	query := fmt.Sprintf("UPDATE %s SET is_approved=true WHERE request_id=$1", postgres.LoansTable)
 	_, err := repos.db.Exec(query, requestId)
 	if err != nil {
 		return err

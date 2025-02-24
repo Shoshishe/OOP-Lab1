@@ -2,20 +2,15 @@ package usersServices
 
 import (
 	"main/domain/entities"
-	"main/service"
 	"main/service/entities_models/request"
 	serviceErrors "main/service/errors"
 	request_mappers "main/service/mappers/request"
+	"main/service/repository"
+	serviceInterfaces "main/service/service_interfaces"
 )
-
-type OuterSpecialistService interface {
-	SendInfoForPayment(req request.PaymentRequestModel, usrRole entities.UserRole) error
-	TransferRequest(transfer request.TransferModel, usrRole entities.UserRole) error
-}
-
 type OuterSpecialistServiceImpl struct {
-	OuterSpecialistService
-	repos service.OuterSpecialistRepository
+	serviceInterfaces.OuterSpecialistService
+	repos repository.OuterSpecialistRepository
 }
 
 func (serv *OuterSpecialistServiceImpl) SendInfoForPayment(req request.PaymentRequestModel, usrRole entities.UserRole) error {
@@ -40,7 +35,7 @@ func (serv *OuterSpecialistServiceImpl) TransferRequest(transfer request.Transfe
 	return serv.repos.TransferRequest(*transferEntity)
 }
 
-func NewOuterSpecialistService(repos service.OuterSpecialistRepository) *OuterSpecialistServiceImpl {
+func NewOuterSpecialistService(repos repository.OuterSpecialistRepository) *OuterSpecialistServiceImpl {
 	return &OuterSpecialistServiceImpl{
 		repos: repos,
 	}

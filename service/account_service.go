@@ -5,20 +5,12 @@ import (
 	"main/service/entities_models/request"
 	serviceErrors "main/service/errors"
 	request_mappers "main/service/mappers/request"
+	"main/service/repository"
+	serviceInterfaces "main/service/service_interfaces"
 )
-
-type BankAccount interface {
-	CreateAccount(account request.BankAccountModel, usrRole entities.UserRole) error
-	FreezeBankAccount(accountIdentificationNum entities.AccountIdenitificationNum, usrRole entities.UserRole) error
-	BlockBankAccount(accountIdentificationNum entities.AccountIdenitificationNum, usrRole entities.UserRole) error
-	PutMoney(amount entities.MoneyAmount, accountIdentificationNum entities.AccountIdenitificationNum, usrRole entities.UserRole) error
-	TakeMoney(amount entities.MoneyAmount, accountIdentificationNum entities.AccountIdenitificationNum, usrRole entities.UserRole) error
-	TransferMoney(transfer request.TransferModel, userRole entities.UserRole) error
-	CloseBankAccount(accountIdentificationNum entities.AccountIdenitificationNum, userRole entities.UserRole) error
-}
 type BankAccountService struct {
-	BankAccount
-	repos AccountRepository
+	serviceInterfaces.BankAccount
+	repos repository.AccountRepository
 }
 
 func (serv *BankAccountService) CreateAccount(account request.BankAccountModel, usrRole entities.UserRole) error {
@@ -83,7 +75,7 @@ func (serv *BankAccountService) CloseBankAccount(accountIdentifNum entities.Acco
 	return serv.repos.CloseBankAccount(accountIdentifNum)
 }
 
-func NewBankAccount(repos AccountRepository) *BankAccountService {
+func NewBankAccount(repos repository.AccountRepository) *BankAccountService {
 	return &BankAccountService{
 		repos: repos,
 	}

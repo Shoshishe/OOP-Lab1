@@ -4,16 +4,13 @@ import (
 	"main/domain/entities"
 
 	serviceErrors "main/service/errors"
+	"main/service/repository"
+	serviceInterfaces "main/service/service_interfaces"
 )
 
-type Bank interface {
-	GetBanksList(pagination int, userRole entities.UserRole) ([]entities.Bank, error)
-	AddBank(bank entities.Bank, userRole entities.UserRole) error
-
-}
 type BankService struct {
-	Bank
-	repos BankRepository
+	serviceInterfaces.Bank
+	repos repository.BankRepository
 	//publisher events.EventPublisher
 }
 
@@ -31,6 +28,6 @@ func (serv *BankService) AddBank(bank entities.Bank, usrRole entities.UserRole) 
 	return serv.repos.AddBank(bank)
 }
 
-func NewBankService(repos BankRepository) *BankService {
+func NewBankService(repos repository.BankRepository) *BankService {
 	return &BankService{repos: repos}
 }

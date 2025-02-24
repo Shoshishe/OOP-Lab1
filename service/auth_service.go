@@ -2,11 +2,12 @@ package service
 
 import (
 	"errors"
-	"main/domain/entities"
 	"main/service/entities_models/request"
 	"main/service/entities_models/response"
 	request_mappers "main/service/mappers/request"
 	response_mappers "main/service/mappers/response"
+	"main/service/repository"
+	serviceInterfaces "main/service/service_interfaces"
 	"main/utils"
 	"time"
 
@@ -23,27 +24,11 @@ type tokenClaims struct {
 	id int
 }
 
-type roleAccess interface {
-	GetUserRole(userId int) (entities.UserRole, error)
-}
-type TokenAuth interface {
-	GenerateToken(fullName, password string) (string, error)
-	ParseToken(accessToken string) (int, error)
-	roleAccess
-}
-type Authorization interface {
-	AddUser(user request.ClientSignUpModel) error
-	// AddAdmin(admin request.AdminSignUpModel) error
-	// AddManager(manager request.ManagerSignUpModel) error 
-	// AddOuterSpecialist(manager request.ManagerSignUpModel) error
-	GetUser(username, password string) (*response.UserAuthModel, error)
-}
-
 type AuthService struct {
-	Authorization
-	TokenAuth
+	serviceInterfaces.Authorization
+	serviceInterfaces.TokenAuth
 	//RoleAccess
-	repos AuthorizationRepository
+	repos repository.AuthorizationRepository
 }
 
 func (serv *AuthService) AddUser(user request.ClientSignUpModel) error {
@@ -94,7 +79,7 @@ func (serv *AuthService) ParseToken(accessToken string) (int, error) {
 	return claims.id, nil
 }
 
-func NewAuthService(repos AuthorizationRepository) *AuthService {
+func NewAuthService(repos repository.AuthorizationRepository) *AuthService {
 	return &AuthService{
 		repos: repos,
 	}

@@ -14,6 +14,7 @@ const (
 	TransfersTable = "transfers"
 	CompaniesTable = "companies"
 	CompaniesWorkersTable = "companies_workers"
+	ActionsTable = "actions"
 	BanksPerRequestLimit = 50
 	TransfersPerRequestLimit = 50
 )

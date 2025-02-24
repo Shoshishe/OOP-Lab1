@@ -7,11 +7,11 @@ import (
 	"main/repository/postgres"
 	persistance "main/repository/postgres/entities_models"
 	persistanceMappers "main/repository/postgres/mappers"
-	"main/service"
+	"main/service/repository"
 )
 
 type OperatorPostgres struct {
-	service.OperatorRepository
+	repository.OperatorRepository
 	db *sql.DB
 }
 

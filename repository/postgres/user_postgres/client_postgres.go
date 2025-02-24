@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"main/domain/entities"
 	"main/repository/postgres"
-	"main/service"
+	"main/service/repository"
 	"time"
 )
 
 type ClientPostgres struct {
-	service.ClientRepository
+	repository.ClientRepository
 	db *sql.DB
 }
 

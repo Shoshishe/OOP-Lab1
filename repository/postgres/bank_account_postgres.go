@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"main/domain/entities"
-	"main/service"
+	"main/service/repository"
 )
 
 type BankAccountPostgres struct {
-	service.AccountRepository
+	repository.AccountRepository
 	db *sql.DB
 }
 

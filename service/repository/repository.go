@@ -3,6 +3,7 @@ package repository
 import (
 	"main/domain/entities"
 	"main/domain/usecases"
+	serviceInterfaces "main/service/service_interfaces"
 )
 
 type Repository struct {
@@ -10,10 +11,11 @@ type Repository struct {
 	BankRepos        BankRepository
 	BankAccountRepos AccountRepository
 	UserRepos        UserRepository
+	ReverserRepos    ReverserRepository
 }
 type AuthorizationRepository interface {
 	usecases.Authorization
-	roleAccess
+	serviceInterfaces.RoleAccess
 	entities.UserOutside
 }
 
@@ -53,4 +55,13 @@ type UserRepository interface {
 	OperatorRepository
 	OuterSpecialistRepository
 	ManagerRepository
+}
+
+type ReverserRepository interface {
+	usecases.AccountActionsReverser
+	usecases.BankActionsReverser
+	usecases.ClientActionsReverser
+	usecases.OperatorActionsReverser
+	usecases.ManagerActionsReverser
+	usecases.ReverserInfo
 }

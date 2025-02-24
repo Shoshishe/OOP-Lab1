@@ -3,17 +3,17 @@ package controllers
 import (
 	"encoding/json"
 	"main/domain/entities"
-	"main/service"
+	serviceInterfaces "main/service/service_interfaces"
 	"net/http"
 	"strconv"
 )
 
 type BankController struct {
-	service    service.Bank
+	service    serviceInterfaces.Bank
 	middleware Middleware
 }
 
-func NewBankController(serv service.Bank, middleware Middleware) *BankController {
+func NewBankController(serv serviceInterfaces.Bank, middleware Middleware) *BankController {
 	return &BankController{
 		service:    serv,
 		middleware: middleware,

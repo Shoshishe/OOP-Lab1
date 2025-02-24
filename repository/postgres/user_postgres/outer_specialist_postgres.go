@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"main/domain/entities"
 	"main/repository/postgres"
-	"main/service"
+	"main/service/repository"
 )
 
 type OuterSpecialistPostgres struct {
-	service.OuterSpecialistRepository
+	repository.OuterSpecialistRepository
 	db *sql.DB
 }
 

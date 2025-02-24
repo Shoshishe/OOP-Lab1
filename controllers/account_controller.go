@@ -4,21 +4,19 @@ import (
 	"encoding/json"
 	"main/domain/entities"
 	domainErrors "main/domain/entities/domain_errors"
-	"main/service"
-
-	//	"main/service"
 	"main/service/entities_models/request"
 	serviceErrors "main/service/errors"
+	serviceInterfaces "main/service/service_interfaces"
 	"net/http"
 	"strconv"
 )
 
 type AccountController struct {
-	service    service.BankAccount
+	service    serviceInterfaces.BankAccount
 	middleware Middleware
 }
 
-func NewAccountController(serv service.BankAccount, middleware Middleware) *AccountController {
+func NewAccountController(serv serviceInterfaces.BankAccount, middleware Middleware) *AccountController {
 	return &AccountController{
 		service:    serv,
 		middleware: middleware,

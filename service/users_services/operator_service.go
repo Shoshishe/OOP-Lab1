@@ -2,19 +2,14 @@ package usersServices
 
 import (
 	"main/domain/entities"
-	"main/service"
 	serviceErrors "main/service/errors"
+	"main/service/repository"
+	serviceInterfaces "main/service/service_interfaces"
 )
 
-type OperatorService interface {
-	ApprovePaymentRequest(requestId int, usrRole int) error
-	GetOperationsList(pagination int, usrRole int) ([]entities.Transfer, error)
-	CancelTransferOperation(operationId int, usrRole int) error
-}
-
 type OperatorServiceImpl struct {
-	OperatorService
-	repos service.OperatorRepository
+	serviceInterfaces.OperatorService
+	repos repository.OperatorRepository
 }
 
 func (serv *OperatorServiceImpl) GetOperationsList(pagination, usrRole int) ([]entities.Transfer, error) {

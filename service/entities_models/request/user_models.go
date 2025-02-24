@@ -10,11 +10,11 @@ type PasportInfoModel struct {
 	PasportNum    string `json:"pasport_num"`
 }
 type ClientSignUpModel struct {
-	FullName      string `json:"full_name" db:"full_name"`
-	Pasport       string `json:"pasport"`
-	MobilePhone   string `json:"phone" db:"phone_number"`
-	PasportSeries string `json:"pasport_series"`
-	PasportNum    string `json:"pasport_num"`
-	Email         string `json:"email" db:"email"`
-	Password      string `json:"password" db:"password"`
+	FullName          string `json:"full_name" db:"full_name" binding:"required"`
+	PasportIdentifNum string `json:"pasport_identif_num" binding:"required"`
+	MobilePhone       string `json:"phone" db:"phone_number" binding:"required"`
+	PasportSeries     string `json:"pasport_series" binding:"required"`
+	PasportNum        string `json:"pasport_num" binding:"required"`
+	Email             string `json:"email" db:"email" binding:"required"`
+	Password          string `json:"password" db:"password" binding:"required"`
 }

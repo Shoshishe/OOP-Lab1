@@ -14,6 +14,32 @@ type CreditRate = decimal.Decimal
 type Date = time.Time
 type Count = int16
 
+type Action struct {
+	actionId   int
+	actionName string
+	actionArgs []string
+}
+
+func (action *Action) ActionId() int {
+	return action.actionId
+}
+
+func (action *Action) ActionName() string {
+	return action.actionName
+}
+
+func (action *Action) ActionArgs() []string {
+	return action.actionArgs
+}
+
+func NewAction(actionId int, actionName string, actionArgs []string) *Action {
+	return &Action{
+		actionId:   actionId,
+		actionName: actionName,
+		actionArgs: actionArgs,
+	}
+}
+
 type PaymentRequest struct {
 	amount     MoneyAmount
 	accountNum AccountIdenitificationNum

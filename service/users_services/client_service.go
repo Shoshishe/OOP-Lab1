@@ -2,21 +2,15 @@ package usersServices
 
 import (
 	"main/domain/entities"
-	"main/service"
 	"main/service/entities_models/request"
 	serviceErrors "main/service/errors"
 	request_mappers "main/service/mappers/request"
+	"main/service/repository"
+	serviceInterfaces "main/service/service_interfaces"
 )
-
-type ClientService interface {
-	TakeLoan(model request.LoanModel, usrRole entities.UserRole) error
-	TakeIrnstallmentPlan(model request.InstallmentPlanModel, usrRole entities.UserRole) error
-	SendCreditsForPayment(model request.PaymentRequestModel, usrRole entities.UserRole) error
-}
-
 type ClientServiceImpl struct {
-	ClientService
-	repos service.ClientRepository
+	serviceInterfaces.ClientService
+	repos repository.ClientRepository
 }
 
 func (serv *ClientServiceImpl) TakeLoan(model request.LoanModel, usrRole entities.UserRole) error {
@@ -64,6 +58,6 @@ func (serv *ClientServiceImpl) SendCreditsForPayment(model request.PaymentReques
 	return nil
 }
 
-func NewClientService(repos service.ClientRepository) *ClientServiceImpl {
+func NewClientService(repos repository.ClientRepository) *ClientServiceImpl {
 	return &ClientServiceImpl{repos: repos}
 }

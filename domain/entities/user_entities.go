@@ -69,6 +69,8 @@ type User struct {
 func NewUser(outsideInfo UserOutside, password string, email string, options ...func(*User)) (*User, error) {
 	usr := &User{outsideInfo: outsideInfo}
 	usr.roleType = RolePendingUser
+	usr.password = password
+	usr.email = email
 	for _, opt := range options {
 		opt(usr)
 	}
@@ -129,7 +131,7 @@ func (usr *User) ValidateFullInput() error {
 }
 
 func (usr *User) ValidateRole() error {
-	if usr.roleType > len(rolesList) || usr.roleType < len(rolesList) {
+	if usr.roleType > len(rolesList) || usr.roleType < RolePendingUser {
 		return domainErrors.NewInvalidField("invalid role input")
 	}
 	return nil

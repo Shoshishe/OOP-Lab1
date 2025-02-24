@@ -54,23 +54,31 @@ type Admin interface {
 	ViewLogs() (string, error)
 }
 
+type ReverserInfo interface {
+	GetAction(actionId int) (entities.Action, error)
+}
 
 type AccountActionsReverser interface {
-	ReverseAccountCreation(operationId int) error
-	ReverseMoneyTransfer(operationId int) error
-	ReverseAccountBlock(operationId int) error
-	ReverseAccountFreeze(operationId int) error
-	ReverseClosingAccount(operationId int) error
+	ReverseAccountCreation(account entities.BankAccount) error
+	ReverseMoneyTransfer(transfer entities.Transfer) error
+	ReverseAccountBlock(accountIdentifNum entities.AccountIdenitificationNum) error
+	ReverseAccountFreeze(accountIdentifNum entities.AccountIdenitificationNum) error
+	ReverseClosingAccount(accountIdentifNum entities.AccountIdenitificationNum) error
 }
 
 type ClientActionsReverser interface {
-	ReverseTakeLoan(operationId int)
-	ReverseTakeInstallmentPlan(operationId int)
-	ReverseSendCreditsForPayment(operationId int)
+	ReverseTakeLoan(loan entities.Loan)
+	ReverseTakeInstallmentPlan(entities.InstallmentPlan)
+	ReverseSendCreditsForPayment(entities.PaymentRequest)
+}
+
+type ManagerActionsReverser interface {
+	ReverseApproveCredit(requestId int)
+	ReverseCancelOuterWorkerOperation(operationId int)
 }
 
 type OperatorActionsReverser interface {
-	ReverseApprovePaymentRequest(operationId int)
+	ReverseApprovePaymentRequest(requestId int)
 	ReverseCancelTransferOperation(operationId int)
 }
 
@@ -78,7 +86,3 @@ type BankActionsReverser interface {
 	ReverseBankAddition(bank entities.Bank)
 }
 
-type Reverser interface {
-	AccountActionsReverser	
-	BankActionsReverser
-}

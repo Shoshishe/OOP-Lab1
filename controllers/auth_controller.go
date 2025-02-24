@@ -2,17 +2,17 @@ package controllers
 
 import (
 	"encoding/json"
-	"main/service"
 	"main/service/entities_models/request"
+	serviceInterfaces "main/service/service_interfaces"
 	"net/http"
 )
 
 type AuthController struct {
-	service service.Authorization
-	tokenAuth service.TokenAuth
+	service serviceInterfaces.Authorization
+	tokenAuth serviceInterfaces.TokenAuth
 }
 
-func NewAuthController(authService service.Authorization, tokenService service.TokenAuth) *AuthController {
+func NewAuthController(authService serviceInterfaces.Authorization, tokenService serviceInterfaces.TokenAuth) *AuthController {
 	return &AuthController{
 		service: authService,
 		tokenAuth:  tokenService,

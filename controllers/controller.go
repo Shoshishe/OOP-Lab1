@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"main/service"
+	serviceInterfaces "main/service/service_interfaces"
 	"net/http"
 )
 
@@ -14,10 +15,10 @@ type Controller struct {
 }
 
 type Middleware struct {
-	authMiddleware service.TokenAuth
+	authMiddleware serviceInterfaces.TokenAuth
 }
 
-func NewMiddleware(authMiddleware service.TokenAuth) *Middleware {
+func NewMiddleware(authMiddleware serviceInterfaces.TokenAuth) *Middleware {
 	return &Middleware{
 		authMiddleware: authMiddleware,
 	}
