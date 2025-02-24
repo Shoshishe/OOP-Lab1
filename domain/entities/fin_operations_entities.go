@@ -81,21 +81,23 @@ func (req *PaymentRequest) ValidateId() error {
 }
 
 type InstallmentPlan struct {
-	bankProviderName BankName
-	amountForPayment MoneyAmount
-	countOfPayments  Count
-	startOfTerm      Date
-	endOfTerm        Date
-	isAccepted       bool
+	bankProviderName  BankName
+	amountForPayment  MoneyAmount
+	accountIdentifNum AccountIdenitificationNum
+	countOfPayments   Count
+	startOfTerm       Date
+	endOfTerm         Date
+	isAccepted        bool
 }
 
-func NewInstallmentPlan(bankProviderName BankName, amountForPayment MoneyAmount, countOfPayments Count, startOfTerm Date, endOfTerm Date) (*InstallmentPlan, error) {
+func NewInstallmentPlan(bankProviderName BankName, amountForPayment MoneyAmount, countOfPayments Count, startOfTerm Date, endOfTerm Date, accountIdentifNum AccountIdenitificationNum) (*InstallmentPlan, error) {
 	planEntity := &InstallmentPlan{
-		bankProviderName: bankProviderName,
-		amountForPayment: amountForPayment,
-		countOfPayments:  countOfPayments,
-		startOfTerm:      startOfTerm,
-		endOfTerm:        endOfTerm,
+		bankProviderName:  bankProviderName,
+		amountForPayment:  amountForPayment,
+		countOfPayments:   countOfPayments,
+		startOfTerm:       startOfTerm,
+		endOfTerm:         endOfTerm,
+		accountIdentifNum: accountIdentifNum,
 	}
 	err := planEntity.ValidatePlan()
 	if err != nil {
@@ -345,9 +347,9 @@ type Validator interface {
 }
 
 type UserTransferOutside interface {
-	doesAccountBelongToUser(accountNum AccountIdenitificationNum, userId int) (bool, error)
-	doesAccountExist(AccountIdenitificationNum) (bool, error)
-	accountMoneyAmount(accountNum AccountIdenitificationNum, userId int) (MoneyAmount, error)
+	DoesAccountBelongToUser(accountNum AccountIdenitificationNum, userId int) (bool, error)
+	DoesAccountExist(AccountIdenitificationNum) (bool, error)
+	AccountMoneyAmount(accountNum AccountIdenitificationNum) (MoneyAmount, error)
 }
 type userAccountChecker struct {
 	Validator
@@ -358,14 +360,14 @@ func (checker *userAccountChecker) ValidateAccount(transfer *Transfer) error {
 	if transfer.senderAccountNum == transfer.receiverAccountNum {
 		return domainErrors.NewInvalidField("sender account is equal to receiver account")
 	}
-	senderBelonging, err := checker.outsideInfo.doesAccountBelongToUser(transfer.SenderAccountNum(), transfer.TransferOwnerId())
+	senderBelonging, err := checker.outsideInfo.DoesAccountBelongToUser(transfer.SenderAccountNum(), transfer.TransferOwnerId())
 	if err != nil {
 		return err
 	}
 	if !senderBelonging {
 		return domainErrors.NewInvalidField("account does not belong to sender")
 	}
-	receiverExists, err := checker.outsideInfo.doesAccountExist(transfer.ReceiverAccountNum())
+	receiverExists, err := checker.outsideInfo.DoesAccountExist(transfer.ReceiverAccountNum())
 	if err != nil {
 		return err
 	}
@@ -382,8 +384,8 @@ func NewUserAccountChecker(outsideInfo UserTransferOutside) *userAccountChecker 
 type CompanyTransferOutside interface {
 	DoesAccountBelongToOuterCompany(accountNum AccountIdenitificationNum, specialistId int) (bool, error)
 	DoesAccountBelongToNonOuterUser(accountNum AccountIdenitificationNum, specialistId int) (bool, error)
-	DoesAccountBelongToUser(AccountIdenitificationNum) (bool, error)
-	AccountMoneyAmount(accountNum AccountIdenitificationNum, userId int) (MoneyAmount, error)
+	DoesAccountBelongToUser(AccountIdenitificationNum, int) (bool, error)
+	AccountMoneyAmount(accountNum AccountIdenitificationNum) (MoneyAmount, error)
 }
 
 type companyAccountChecker struct {
@@ -395,7 +397,7 @@ func (checker *companyAccountChecker) ValidateAccount(transfer *Transfer) error 
 	if transfer.senderAccountNum == transfer.receiverAccountNum {
 		return domainErrors.NewInvalidField("sender account is equal to receiver account")
 	}
-	belongsToSender, err := checker.outsideInfo.DoesAccountBelongToUser(transfer.SenderAccountNum())
+	belongsToSender, err := checker.outsideInfo.DoesAccountBelongToUser(transfer.SenderAccountNum(), transfer.transferOwnerId)
 	if err != nil {
 		return err
 	}
@@ -424,6 +426,23 @@ func NewCompanyAccountChecker(outsideInfo CompanyTransferOutside) *companyAccoun
 	return &companyAccountChecker{outsideInfo: outsideInfo}
 }
 
+// PROCEED AT YOUR OWN RISK
+type ZeroChecker struct {
+	Validator
+}
+
+func (validator *ZeroChecker) ValidateAccount(transfer *Transfer) error {
+	return nil
+}
+
+func (validator *ZeroChecker) ValidateMoneyAmount(transfer *Transfer) error {
+	return nil
+}
+
+func NewZeroChecker() *ZeroChecker {
+	return &ZeroChecker{}
+}
+
 type Transfer struct {
 	transferOwnerId    int
 	senderAccountNum   AccountIdenitificationNum
@@ -443,7 +462,7 @@ func (checker userAccountChecker) ValidateMoneyAmount(transfer *Transfer) error 
 	if transfer.sumOfTransfer < 0 {
 		return domainErrors.NewInvalidField("invalid money amount")
 	}
-	Money, err := checker.outsideInfo.accountMoneyAmount(transfer.senderAccountNum, transfer.transferOwnerId)
+	Money, err := checker.outsideInfo.AccountMoneyAmount(transfer.senderAccountNum)
 	if err != nil {
 		return err
 	}
@@ -457,7 +476,7 @@ func (checker companyAccountChecker) ValidateMoneyAmount(transfer *Transfer) err
 	if transfer.sumOfTransfer < 0 {
 		return domainErrors.NewInvalidField("invalid money amount")
 	}
-	Money, err := checker.outsideInfo.AccountMoneyAmount(transfer.senderAccountNum, transfer.transferOwnerId)
+	Money, err := checker.outsideInfo.AccountMoneyAmount(transfer.senderAccountNum)
 	if err != nil {
 		return err
 	}

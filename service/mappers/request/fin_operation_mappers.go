@@ -31,7 +31,8 @@ func ToTransferEntitity(model request.TransferModel, validator entities.Validato
 func ToInstallmentPlanEntity(model request.InstallmentPlanModel) (*entities.InstallmentPlan, error) {
 	entity, err := entities.NewInstallmentPlan(
 		model.BankProviderName, model.AmountForPayment,
-		model.CountOfPayments, model.StartOfTerm, model.EndOfTerm,
+		model.CountOfPayments, model.StartOfTerm, 
+		model.EndOfTerm, model.AccountIdentifNum,
 	)
 	if err != nil {
 		return nil, err

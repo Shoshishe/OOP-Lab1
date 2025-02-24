@@ -25,6 +25,27 @@ type Bank struct {
 	Type BankType
 }
 
+func NewBank(info Company, Type BankType) (*Bank, error) {
+	bank := &Bank{
+		Info: info,
+		Type: Type,
+	}
+	err := errors.Join(
+		bank.Info.ValidateCompany(),
+		bank.ValidateBankType(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return bank, nil
+}
+
+func (bank *Bank) ValidateBankType() error {
+	if bank.Type != CommercialBank && bank.Type != EmissionBank {
+		return domainErrors.NewInvalidField("invalid bank type")
+	}
+	return nil
+}
 type CompanyOutside interface {
 	CheckNameUniqueness(legalName Name) (bool, error)
 	CheckBankExistance(bankIdentifNum BankIdentificationNum) (bool, error)

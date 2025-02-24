@@ -23,11 +23,12 @@ type TransferModel struct {
 }
 
 type InstallmentPlanModel struct {
-	BankProviderName string    `json:"bank_name" binding:"required"`
-	AmountForPayment int64     `json:"amount" binding:"required"`
-	CountOfPayments  int16     `json:"count_of_payments" binding:"required"`
-	StartOfTerm      time.Time `json:"start_of_term" binding:"required"`
-	EndOfTerm        time.Time `json:"end_of_term" binding:"required"`
+	BankProviderName  string    `json:"bank_name" binding:"required"`
+	AmountForPayment  int64     `json:"amount" binding:"required"`
+	CountOfPayments   int16     `json:"count_of_payments" binding:"required"`
+	StartOfTerm       time.Time `json:"start_of_term" binding:"required"`
+	AccountIdentifNum string    `json:"account_identif_num" binding:"required"`
+	EndOfTerm         time.Time `json:"end_of_term" binding:"required"`
 }
 
 type PaymentRequestModel struct {

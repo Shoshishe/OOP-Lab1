@@ -15,7 +15,7 @@ type OuterSpecialistPostgres struct {
 }
 
 func (repos *OuterSpecialistPostgres) SendInfoForPayment(req entities.PaymentRequest) error {
-	query := fmt.Sprintf("INSERT INTO %s (client_id,account_num, amount, pasport_series, pasport_num) SELECT $1, $2, $3, pasport_series, pasport_num FROM %s", postgres.PaymentRequestsTable, postgres.UsersTable)
+	query := fmt.Sprintf("INSERT INTO %s (client_id,account_num, amount, pasport_series, pasport_num) SELECT $1, $2, $3, pasport_series, pasport_num FROM %s WHERE id=$1", postgres.PaymentRequestsTable, postgres.UsersTable)
 	_, err := repos.db.Exec(query, req.ClientId(), req.AccountNum(), req.Amount())
 	if err != nil {
 		return err
@@ -63,7 +63,7 @@ func (repos *OuterSpecialistPostgres) DoesAccountBelongToNonOuterUser(accountIde
 	row = repos.db.QueryRow(nonSharedCompaniesQuery, accountOwnerId, specialistId)
 	if row.Err() == sql.ErrNoRows {
 		return false, errors.New("no distinct companies between users")
-	} 
+	}
 	if row.Err() != nil {
 		return false, err
 	}
@@ -72,6 +72,28 @@ func (repos *OuterSpecialistPostgres) DoesAccountBelongToNonOuterUser(accountIde
 		return false, err
 	}
 	return true, nil
+}
+
+func (repos *OuterSpecialistPostgres) DoesAccountBelongToUser(accountNum entities.AccountIdenitificationNum, userId int) (bool, error) {
+	var belongs bool
+	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE acount_identif_num=$1 AND user_id=$2)", postgres.AccountsTable)
+	row := repos.db.QueryRow(query, accountNum, userId)
+	err := row.Scan(&belongs)
+	if err != nil {
+		return false, err
+	}
+	return belongs, nil
+}
+
+func (repos *OuterSpecialistPostgres) AccountMoneyAmount(accountNum entities.AccountIdenitificationNum) (entities.MoneyAmount, error) {
+	var moneyAmount int
+	query := fmt.Sprintf("SELECT amount FROM %s WHERE acount_identif_num=$1", postgres.AccountsTable)
+	row := repos.db.QueryRow(query, accountNum)
+	err := row.Scan(moneyAmount)
+	if err != nil {
+		return 0, err
+	}
+	return entities.MoneyAmount(moneyAmount), nil
 }
 
 func NewOuterSpecialistPostgres(db *sql.DB) *OuterSpecialistPostgres {

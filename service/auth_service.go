@@ -13,7 +13,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// TODO: DTOS
 const (
 	tokenTTL   = 12 * time.Hour
 	signingKey = ",;mkljhgffxdgcfhvg"

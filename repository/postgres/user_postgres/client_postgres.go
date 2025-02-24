@@ -15,7 +15,7 @@ type ClientPostgres struct {
 }
 
 func (clientRepo *ClientPostgres) TakeInstallmentPlan(plan entities.InstallmentPlan) error {
-	query := fmt.Sprintf("INSERT INTO %s (bank_provider_name, amount, count_of_payments,start_date,end_date) VALUES ($1,$2,$3,$4,$5)", postgres.InstallmentsTable)
+	query := fmt.Sprintf("INSERT INTO %s (bank_provider_name, loan_amount, count_of_payments,start_date,end_date) VALUES ($1,$2,$3,$4,$5)", postgres.LoansTable)
 	_, err := clientRepo.db.Exec(query, plan.BankProviderName(), plan.AmountForPayment(), plan.CountOfPayments(), plan.StartOfTerm(), plan.EndOfTerm())
 	if err != nil {
 		return err

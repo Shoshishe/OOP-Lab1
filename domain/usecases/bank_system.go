@@ -22,10 +22,9 @@ type Bank interface {
 	AddBank(bank entities.Bank) error
 }
 
-type Company interface {
-	GetPaymentRequests(pagination int) error
-	SendPayment(userId int) error
-}
+// type Company interface {
+// 	GetPaymentRequests(pagination int) error
+// }
 
 type Client interface {
 	TakeLoan(entities.Loan) error
@@ -34,9 +33,9 @@ type Client interface {
 }
 
 type Operator interface {
-	ApprovePayment(requestId int) error
+	ApprovePaymentRequest(requestId int) error
 	GetOperationsList(pagination int) ([]entities.Transfer, error)
-	CancelOperation(operationId int) error
+	CancelTransferOperation(operationId int) error
 }
 
 type Manager interface {
@@ -53,4 +52,33 @@ type OuterSpecialist interface {
 type Admin interface {
 	CancelActions(userId int) error
 	ViewLogs() (string, error)
+}
+
+
+type AccountActionsReverser interface {
+	ReverseAccountCreation(operationId int) error
+	ReverseMoneyTransfer(operationId int) error
+	ReverseAccountBlock(operationId int) error
+	ReverseAccountFreeze(operationId int) error
+	ReverseClosingAccount(operationId int) error
+}
+
+type ClientActionsReverser interface {
+	ReverseTakeLoan(operationId int)
+	ReverseTakeInstallmentPlan(operationId int)
+	ReverseSendCreditsForPayment(operationId int)
+}
+
+type OperatorActionsReverser interface {
+	ReverseApprovePaymentRequest(operationId int)
+	ReverseCancelTransferOperation(operationId int)
+}
+
+type BankActionsReverser interface {
+	ReverseBankAddition(bank entities.Bank)
+}
+
+type Reverser interface {
+	AccountActionsReverser	
+	BankActionsReverser
 }
