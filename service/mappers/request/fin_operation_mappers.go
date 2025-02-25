@@ -43,7 +43,7 @@ func ToInstallmentPlanEntity(model request.InstallmentPlanModel) (*entities.Inst
 func ToRequestEntity(model request.PaymentRequestModel) (*entities.PaymentRequest, error) {
 	entity, err := entities.NewPaymentRequest(
 		entities.MoneyAmount(model.Amount), model.AccountNum, 
-		model.ClientId, model.CompanyId,
+		model.FullName, model.ClientId, model.CompanyId,
 	)
 	if err != nil {
 		return nil, err

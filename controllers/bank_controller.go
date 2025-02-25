@@ -22,7 +22,7 @@ func NewBankController(serv serviceInterfaces.Bank, middleware Middleware) *Bank
 
 func (bankController *BankController) addBank(writer http.ResponseWriter, req *http.Request) {
 	var input entities.Bank
-	var usrRole entities.UserRole
+	usrId, err := bankController.middleware.userIdentity(req)
 	usrRole, err := bankController.middleware.userRole(req)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
@@ -36,9 +36,9 @@ func (bankController *BankController) addBank(writer http.ResponseWriter, req *h
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	err = bankController.service.AddBank(input, usrRole)
+	err = bankController.service.AddBank(input, usrId, usrRole)
 	if err != nil {
-		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
+		lastErrorHandling(writer, err)
 		return
 	}
 	okResponse(writer)
@@ -66,7 +66,7 @@ func (bankController *BankController) getBanksList(writer http.ResponseWriter, r
 	}
 	list, err = bankController.service.GetBanksList(pagination, usrRole)
 	if err != nil {
-		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
+		lastErrorHandling(writer, err)
 		return
 	}
 	json, err := json.Marshal(list)

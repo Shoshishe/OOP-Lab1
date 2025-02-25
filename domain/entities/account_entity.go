@@ -25,9 +25,9 @@ type Status struct {
 	isFrozen  bool
 }
 
-func NewBankAccount(amount MoneyAmount, accountIdentifNum AccountIdenitificationNum, bankFullName BankName, bankIdentifNum BankIdentificationNum) (*BankAccount, error) {
+func NewBankAccount(accountIdentifNum AccountIdenitificationNum, bankFullName BankName, bankIdentifNum BankIdentificationNum) (*BankAccount, error) {
 	account := &BankAccount{
-		amount:                    amount,
+		amount:                    0,
 		accountIdenitificationNum: accountIdentifNum,
 		bankFullName:              bankFullName,
 		bankIdentificationNum:     bankIdentifNum,

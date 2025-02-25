@@ -8,18 +8,18 @@ type Authorization interface {
 }
 
 type BankAccount interface {
-	CreateAccount(account entities.BankAccount) error
+	CreateAccount(account entities.BankAccount, userId int) error
 	PutMoney(amount entities.MoneyAmount, accountIdentificationNum entities.AccountIdenitificationNum) error
 	TakeMoney(amount entities.MoneyAmount, accountIdentifNum entities.AccountIdenitificationNum) error
-	TransferMoney(transfer entities.Transfer) error
-	BlockBankAccount(accountIdenitificationNum entities.AccountIdenitificationNum) error
-	FreezeBankAccount(accountIdenitificationNum entities.AccountIdenitificationNum) error
-	CloseBankAccount(accountIdentificationNum entities.AccountIdenitificationNum) error
+	TransferMoney(transfer entities.Transfer, userId int) error
+	BlockBankAccount(accountIdenitificationNum entities.AccountIdenitificationNum, userId int) error
+	FreezeBankAccount(accountIdenitificationNum entities.AccountIdenitificationNum, userId int) error
+	CloseBankAccount(accountIdentificationNum entities.AccountIdenitificationNum, userId int) error
 }
 
 type Bank interface {
 	GetBanksList(pagination int) ([]entities.Bank, error)
-	AddBank(bank entities.Bank) error
+	AddBank(bank entities.Bank, userId int) error
 }
 
 // type Company interface {
@@ -27,26 +27,26 @@ type Bank interface {
 // }
 
 type Client interface {
-	TakeLoan(entities.Loan) error
-	TakeInstallmentPlan(entities.InstallmentPlan) error
-	SendCreditsForPayment(entities.PaymentRequest) error
+	TakeLoan(loan entities.Loan, userId int) error
+	TakeInstallmentPlan(installment entities.InstallmentPlan, userId int) error
+	SendCreditsForPayment(req entities.PaymentRequest, userId int) error
 }
 
 type Operator interface {
-	ApprovePaymentRequest(requestId int) error
+	ApprovePaymentRequest(requestId int, userId int) error
 	GetOperationsList(pagination int) ([]entities.Transfer, error)
-	CancelTransferOperation(operationId int) error
+	CancelTransferOperation(operationId int, userId int) error
 }
 
 type Manager interface {
 	Operator
-	ApproveCredit(requestId int) error
-	CancelOuterWorkerOperation(operationId int) error
+	ApproveCredit(requestId int, userId int) error
+	CancelOuterWorkerOperation(operationId int, userId int) error
 }
 
 type OuterSpecialist interface {
-	SendInfoForPayment(entities.PaymentRequest) error
-	TransferRequest(transfer entities.Transfer) error
+	SendInfoForPayment(req entities.PaymentRequest, userId int) error
+	TransferRequest(transfer entities.Transfer, userId int) error
 }
 
 type Admin interface {
@@ -59,30 +59,25 @@ type ReverserInfo interface {
 }
 
 type AccountActionsReverser interface {
-	ReverseAccountCreation(account entities.BankAccount) error
-	ReverseMoneyTransfer(transfer entities.Transfer) error
-	ReverseAccountBlock(accountIdentifNum entities.AccountIdenitificationNum) error
-	ReverseAccountFreeze(accountIdentifNum entities.AccountIdenitificationNum) error
-	ReverseClosingAccount(accountIdentifNum entities.AccountIdenitificationNum) error
+	ReverseAccountCreation(account entities.BankAccount, usrId int) error
+	ReverseMoneyTransfer(transfer entities.Transfer, usrId int) error
+	ReverseAccountBlock(accountIdentifNum entities.AccountIdenitificationNum, usrId int) error
+	ReverseAccountFreeze(accountIdentifNum entities.AccountIdenitificationNum, usrId int) error
 }
 
 type ClientActionsReverser interface {
-	ReverseTakeLoan(loan entities.Loan)
-	ReverseTakeInstallmentPlan(entities.InstallmentPlan)
-	ReverseSendCreditsForPayment(entities.PaymentRequest)
+	ReverseTakeLoan(loan entities.Loan, usrId int) error
+	ReverseTakeInstallmentPlan(loan entities.InstallmentPlan, usrId int) error
+	ReverseSendCreditsForPayment(req entities.PaymentRequest, usrId int) error
 }
 
-type ManagerActionsReverser interface {
-	ReverseApproveCredit(requestId int)
-	ReverseCancelOuterWorkerOperation(operationId int)
+type OuterSpecialistReverser interface {
+	ReverseTransferRequest(transfer entities.Transfer, userId int) error
 }
-
 type OperatorActionsReverser interface {
-	ReverseApprovePaymentRequest(requestId int)
-	ReverseCancelTransferOperation(operationId int)
+	ReverseCancelTransferOperation(operationId int, usrId int) error
 }
 
 type BankActionsReverser interface {
-	ReverseBankAddition(bank entities.Bank)
+	ReverseBankAddition(bank entities.Bank, usrId int) error
 }
-

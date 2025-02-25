@@ -6,20 +6,20 @@ import (
 )
 
 type ClientService interface {
-	TakeLoan(model request.LoanModel, usrRole entities.UserRole) error
-	TakeIrnstallmentPlan(model request.InstallmentPlanModel, usrRole entities.UserRole) error
-	SendCreditsForPayment(model request.PaymentRequestModel, usrRole entities.UserRole) error
+	TakeLoan(model request.LoanModel, usrId int, usrRole entities.UserRole) error
+	TakeIrnstallmentPlan(model request.InstallmentPlanModel, usrId int, usrRole entities.UserRole) error
+	SendCreditsForPayment(model request.PaymentRequestModel, usrId int, usrRole entities.UserRole) error
 }
 
 type OperatorService interface {
-	ApprovePaymentRequest(requestId int, usrRole int) error
+	ApprovePaymentRequest(requestId, usrId, usrRole int) error
 	GetOperationsList(pagination int, usrRole int) ([]entities.Transfer, error)
-	CancelTransferOperation(operationId int, usrRole int) error
+	CancelTransferOperation(operationId int, usrId int, usrRole int) error
 }
 
 type OuterSpecialistService interface {
-	SendInfoForPayment(req request.PaymentRequestModel, usrRole entities.UserRole) error
-	TransferRequest(transfer request.TransferModel, usrRole entities.UserRole) error
+	SendInfoForPayment(req request.PaymentRequestModel, usrId int, usrRole entities.UserRole) error
+	TransferRequest(transfer request.TransferModel, usrId int, usrRole entities.UserRole) error
 }
 
 //TODO: DEFINE IF IT SHALL REALLY EXIST

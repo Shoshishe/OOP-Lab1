@@ -21,11 +21,11 @@ func (serv *BankService) GetBanksList(pagination int, userRole entities.UserRole
 	return serv.repos.GetBanksList(pagination)
 }
 
-func (serv *BankService) AddBank(bank entities.Bank, usrRole entities.UserRole) error {
+func (serv *BankService) AddBank(bank entities.Bank, usrId int, usrRole entities.UserRole) error {
 	if usrRole != entities.RoleAdmin {
 		return serviceErrors.NewRoleError("")
 	}
-	return serv.repos.AddBank(bank)
+	return serv.repos.AddBank(bank, usrId)
 }
 
 func NewBankService(repos repository.BankRepository) *BankService {

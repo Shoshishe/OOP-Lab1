@@ -6,8 +6,7 @@ import (
 )
 
 func ToAccountEntity(req *request.BankAccountModel) (*entities.BankAccount, error) {
-	account, err := entities.NewBankAccount(req.Amount, 
-		req.AccountIdentificationNum, req.BankFullName, req.BankIdentificationNum)
+	account, err := entities.NewBankAccount(req.AccountIdentificationNum, req.BankFullName, req.BankIdentificationNum)
 	if err != nil {
 		return nil, err
 	}

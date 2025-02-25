@@ -19,16 +19,16 @@ func (serv *OperatorServiceImpl) GetOperationsList(pagination, usrRole int) ([]e
 	return serv.repos.GetOperationsList(pagination)
 }
 
-func (serv *OperatorServiceImpl) CancelTransferOperation(operationId int, usrRole int) error {
+func (serv *OperatorServiceImpl) CancelTransferOperation(operationId int, usrId, usrRole int) error {
 	if usrRole != entities.RoleOperator {
 		return serviceErrors.NewRoleError("not permitted to cancel transfer operations")
 	}
-	return serv.repos.CancelTransferOperation(operationId)
+	return serv.repos.CancelTransferOperation(operationId, usrId)
 }
 
-func (serv *OperatorServiceImpl) ApprovePaymentRequest(requestId, usrRole int) error {
+func (serv *OperatorServiceImpl) ApprovePaymentRequest(requestId, usrId, usrRole int) error {
 	if usrRole != entities.RoleOperator {
 		return serviceErrors.NewRoleError("not permitted to approve payment requests")
 	}
-	return serv.repos.ApprovePaymentRequest(requestId)
+	return serv.repos.ApprovePaymentRequest(requestId, usrId)
 }

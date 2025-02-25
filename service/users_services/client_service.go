@@ -13,7 +13,7 @@ type ClientServiceImpl struct {
 	repos repository.ClientRepository
 }
 
-func (serv *ClientServiceImpl) TakeLoan(model request.LoanModel, usrRole entities.UserRole) error {
+func (serv *ClientServiceImpl) TakeLoan(model request.LoanModel, usrId int, usrRole entities.UserRole) error {
 	if usrRole != entities.RoleUser {
 		return serviceErrors.NewRoleError("not permitted to take loans")
 	}
@@ -21,14 +21,14 @@ func (serv *ClientServiceImpl) TakeLoan(model request.LoanModel, usrRole entitie
 	if err != nil {
 		return err
 	}
-	err = serv.repos.TakeLoan(*entity)
+	err = serv.repos.TakeLoan(*entity, usrId)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (serv *ClientServiceImpl) TakeInstallmentPlan(model request.InstallmentPlanModel, usrRole entities.UserRole) error {
+func (serv *ClientServiceImpl) TakeInstallmentPlan(model request.InstallmentPlanModel, usrId int, usrRole entities.UserRole) error {
 	if usrRole != entities.RoleUser {
 		return serviceErrors.NewRoleError("not permitted to take installment plans")
 	}
@@ -36,14 +36,14 @@ func (serv *ClientServiceImpl) TakeInstallmentPlan(model request.InstallmentPlan
 	if err != nil {
 		return err
 	}
-	err = serv.repos.TakeInstallmentPlan(*entity)
+	err = serv.repos.TakeInstallmentPlan(*entity, usrId)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (serv *ClientServiceImpl) SendCreditsForPayment(model request.PaymentRequestModel, usrRole entities.UserRole) error {
+func (serv *ClientServiceImpl) SendCreditsForPayment(model request.PaymentRequestModel, usrId int, usrRole entities.UserRole) error {
 	if usrRole != entities.RoleUser {
 		return serviceErrors.NewRoleError("not permitted to send credits for payment")
 	}
@@ -51,7 +51,7 @@ func (serv *ClientServiceImpl) SendCreditsForPayment(model request.PaymentReques
 	if err != nil {
 		return err
 	}
-	err = serv.repos.SendCreditsForPayment(*entity)
+	err = serv.repos.SendCreditsForPayment(*entity, usrId)
 	if err != nil {
 		return err
 	}

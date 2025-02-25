@@ -2,15 +2,15 @@ package entities
 
 import (
 	"errors"
-	"github.com/shopspring/decimal"
 	domainErrors "main/domain/entities/domain_errors"
+	"strings"
 	"time"
 )
 
 type MoneyAmount = int64
 type BankName = string
 type BankIdentificationNum = string
-type CreditRate = decimal.Decimal
+type CreditRate = string
 type Date = time.Time
 type Count = int16
 
@@ -41,10 +41,15 @@ func NewAction(actionId int, actionName string, actionArgs []string) *Action {
 }
 
 type PaymentRequest struct {
-	amount     MoneyAmount
-	accountNum AccountIdenitificationNum
-	clientId   int
-	companyId  int
+	amount            MoneyAmount
+	accountNum        AccountIdenitificationNum
+	requesterFullName FullName
+	clientId          int
+	companyId         int
+}
+
+func (req *PaymentRequest) RequesterFullName() FullName {
+	return req.requesterFullName
 }
 
 func (req *PaymentRequest) Amount() MoneyAmount {
@@ -63,7 +68,7 @@ func (req *PaymentRequest) CompanyId() int {
 	return req.companyId
 }
 
-func NewPaymentRequest(amount MoneyAmount, accountNum string, clientId int, companyId int) (*PaymentRequest, error) {
+func NewPaymentRequest(amount MoneyAmount, accountNum string, requsterFullName string, clientId int, companyId int) (*PaymentRequest, error) {
 	req := &PaymentRequest{
 		amount:     amount,
 		accountNum: accountNum,
@@ -280,7 +285,7 @@ func (loan *Loan) ValidateAccountIdentifNum() error {
 
 func (loan *Loan) ValidateRate() error {
 	var err error
-	if loan.rate.LessThan(decimal.New(1, 1)) {
+	if loan.rate == "" || !strings.Contains(loan.rate, "%") {
 		err = domainErrors.NewInvalidField("invalid credit rate")
 	}
 	return err

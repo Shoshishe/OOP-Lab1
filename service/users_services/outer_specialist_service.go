@@ -8,12 +8,13 @@ import (
 	"main/service/repository"
 	serviceInterfaces "main/service/service_interfaces"
 )
+
 type OuterSpecialistServiceImpl struct {
 	serviceInterfaces.OuterSpecialistService
 	repos repository.OuterSpecialistRepository
 }
 
-func (serv *OuterSpecialistServiceImpl) SendInfoForPayment(req request.PaymentRequestModel, usrRole entities.UserRole) error {
+func (serv *OuterSpecialistServiceImpl) SendInfoForPayment(req request.PaymentRequestModel, usrId int, usrRole entities.UserRole) error {
 	if usrRole != entities.RoleOuterSpecialist {
 		return serviceErrors.NewRoleError("can't send info for payment as non outer specialist")
 	}
@@ -21,10 +22,10 @@ func (serv *OuterSpecialistServiceImpl) SendInfoForPayment(req request.PaymentRe
 	if err != nil {
 		return err
 	}
-	return serv.repos.SendInfoForPayment(*requestEntity)
+	return serv.repos.SendInfoForPayment(*requestEntity, usrId)
 }
 
-func (serv *OuterSpecialistServiceImpl) TransferRequest(transfer request.TransferModel,  usrRole entities.UserRole) error {
+func (serv *OuterSpecialistServiceImpl) TransferRequest(transfer request.TransferModel, usrId int, usrRole entities.UserRole) error {
 	if usrRole != entities.RoleOuterSpecialist {
 		return serviceErrors.NewRoleError("can't send transfer request as non outer specialist")
 	}
@@ -32,7 +33,7 @@ func (serv *OuterSpecialistServiceImpl) TransferRequest(transfer request.Transfe
 	if err != nil {
 		return err
 	}
-	return serv.repos.TransferRequest(*transferEntity)
+	return serv.repos.TransferRequest(*transferEntity, usrId)
 }
 
 func NewOuterSpecialistService(repos repository.OuterSpecialistRepository) *OuterSpecialistServiceImpl {

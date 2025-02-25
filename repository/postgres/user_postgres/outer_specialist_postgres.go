@@ -14,21 +14,69 @@ type OuterSpecialistPostgres struct {
 	db *sql.DB
 }
 
-func (repos *OuterSpecialistPostgres) SendInfoForPayment(req entities.PaymentRequest) error {
+func (repos *OuterSpecialistPostgres) SendInfoForPayment(req entities.PaymentRequest, usrId int) error {
+	tx, err := repos.db.Begin()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
 	query := fmt.Sprintf("INSERT INTO %s (client_id,account_num, amount, pasport_series, pasport_num) SELECT $1, $2, $3, pasport_series, pasport_num FROM %s WHERE id=$1", postgres.PaymentRequestsTable, postgres.UsersTable)
-	_, err := repos.db.Exec(query, req.ClientId(), req.AccountNum(), req.Amount())
+	_, err = repos.db.Exec(query, req.ClientId(), req.AccountNum(), req.Amount())
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	args := make([]string, 0, 3)
+	args = append(args, fmt.Sprint(req.ClientId()), req.AccountNum(), fmt.Sprint(req.Amount()))
+	err = postgres.InsertAction(tx, repos.db, "SendInfoForPayment", args, usrId)
 	if err != nil {
 		return err
 	}
+    tx.Commit()
 	return nil
 }
 
-func (repos *OuterSpecialistPostgres) TransferRequest(transfer entities.Transfer) error {
-	query := fmt.Sprintf("INSERT INTO %s (owner_id, sender_acc_num, receiver_acc_num) VALUES ($1,$2,$3)", postgres.TransfersTable)
-	_, err := repos.db.Exec(query, transfer.TransferOwnerId(), transfer.SenderAccountNum(), transfer.ReceiverAccountNum())
+func (repos *OuterSpecialistPostgres) TransferRequest(transfer entities.Transfer, usrId int) error {
+	tx, err := repos.db.Begin()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	query := fmt.Sprintf("INSERT INTO %s (owner_id, sender_acc_num, receiver_acc_num, amount) VALUES ($1,$2,$3, $4)", postgres.TransfersTable)
+	_, err = repos.db.Exec(query, transfer.TransferOwnerId(), transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), transfer.SumOfTransfer())
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	args := make([]string, 0, 4)
+	args = append(args, fmt.Sprint(transfer.TransferOwnerId()),transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), fmt.Sprint(transfer.SumOfTransfer()))
+	err = postgres.InsertAction(tx, repos.db, "TransferRequest", args, usrId)
 	if err != nil {
 		return err
 	}
+	tx.Commit()
+	return nil
+}
+
+func (repos *OuterSpecialistPostgres) ReverseTransferRequest(transfer entities.Transfer, usrId int) error {
+	tx, err := repos.db.Begin()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	query := fmt.Sprintf("DELETE FROM %s WHERE owner_id=$1 AND sender_acc_num=$2 AND receiver_acc_num=$3 AND amount=$4", postgres.TransfersTable)
+	_, err = repos.db.Exec(query, transfer.TransferOwnerId(), transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), transfer.SumOfTransfer())
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	args := make([]string, 0, 4)
+	args = append(args, fmt.Sprint(transfer.TransferOwnerId()),transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), fmt.Sprint(transfer.SumOfTransfer()))
+	err = postgres.ReverseAction(tx, repos.db,  args, usrId)
+	if err != nil {
+		return err
+	}
+	tx.Commit()
 	return nil
 }
 

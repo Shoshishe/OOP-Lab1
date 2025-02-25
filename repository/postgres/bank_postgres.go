@@ -6,17 +6,58 @@ import (
 	"main/domain/entities"
 	persistance "main/repository/postgres/entities_models"
 	persistanceMappers "main/repository/postgres/mappers"
-	"main/service"
+	"main/service/repository"
+
+	"github.com/lib/pq"
 )
 
 type BankPostgres struct {
-	service.BankService
+	repository.BankRepository
 	db *sql.DB
 }
 
-func (bankRepo *BankPostgres) AddBank(bank entities.Bank) error {
+func (bankRepo *BankPostgres) AddBank(bank entities.Bank, usrId int) error {
+	tx, err := bankRepo.db.Begin()
+	if err != nil {
+		return err
+	}
 	query := fmt.Sprintf("INSERT INTO %s (name, adress, payers_acc_num, company_type, bank_ident_num, type) values ($1,$2,$3,$4,$5,$6)", BanksTable)
-	_, err := bankRepo.db.Exec(query, bank.Info.LegalName, bank.Info.LegalAdress, bank.Info.PayersAccountNumber, bank.Info.CompanyType, bank.Info.BankIdentificationNum, bank.Type)
+	_, err = bankRepo.db.Exec(query, bank.Info.LegalName(), bank.Info.LegalAdress(), bank.Info.PayersAccountNumber(), bank.Info.CompanyType(), bank.Info.BankIdentificationNum(), bank.Type)
+	if err != nil {
+		return err
+	}
+	actionInsertQuery := fmt.Sprintf("INSERT INTO %s (user_id, first_action_type, first_action_args) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET"+
+		"second_action_type=first_action_type, second_action_args=first_action_args," +
+		"first_action_type=EXCLUDED.first_action_type, first_action_args=EXCLUDED.first_action_args", ActionsTable)
+	args := make([]string, 0, 6)
+	args = append(args, bank.Info.LegalName(), bank.Info.LegalAdress(), bank.Info.PayersAccountNumber(), bank.Info.CompanyType(), bank.Info.CompanyType(), bank.Type)
+	_, err = bankRepo.db.Exec(actionInsertQuery, usrId, "AddBank", pq.Array(args))
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (bankRepo *BankPostgres) ReverseBankAddition(bank entities.Bank, usrId int) error {
+	tx, err := bankRepo.db.Begin()
+	if err != nil {
+		return err
+	}
+	query := fmt.Sprintf("DELETE FROM %s WHERE name=$1", BanksTable)
+	_, err = bankRepo.db.Exec(query, bank.Info.LegalName())
+	if err != nil {
+		return err
+	}
+	args := make([]string, 0, 6)
+	args = append(args, bank.Info.LegalName(), bank.Info.LegalAdress(), bank.Info.PayersAccountNumber(), bank.Info.CompanyType(), bank.Info.CompanyType(), bank.Type)
+	ReverseAction(tx, bankRepo.db, args, usrId)
+	err = tx.Commit()
 	if err != nil {
 		return err
 	}

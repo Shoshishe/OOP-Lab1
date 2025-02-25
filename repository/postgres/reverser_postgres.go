@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"main/domain/entities"
 	"main/domain/usecases"
+
 	persistance "main/repository/postgres/entities_models"
 	persistanceMappers "main/repository/postgres/mappers"
 
@@ -14,6 +15,12 @@ import (
 type ReverserPostgres struct {
 	usecases.ReverserInfo
 	db *sql.DB
+}
+
+func NewReverserRepository(db *sql.DB) *ReverserPostgres {
+	return &ReverserPostgres{
+		db: db,
+	}
 }
 
 func (repos *ReverserPostgres) GetAction(actionId int) (entities.Action, error) {
@@ -34,8 +41,4 @@ func (repos *ReverserPostgres) GetAction(actionId int) (entities.Action, error) 
 		}
 	}
 	return *persistanceMappers.ToActionEntity(action), nil
-}
-
-func NewReverserPostgres(db *sql.DB) *ReverserPostgres {
-	return &ReverserPostgres{db: db}
 }

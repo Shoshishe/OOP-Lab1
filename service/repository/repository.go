@@ -11,7 +11,7 @@ type Repository struct {
 	BankRepos        BankRepository
 	BankAccountRepos AccountRepository
 	UserRepos        UserRepository
-	ReverserRepos    ReverserRepository
+	ReverserRepos    ReverserInfoRepository
 }
 type AuthorizationRepository interface {
 	usecases.Authorization
@@ -21,16 +21,19 @@ type AuthorizationRepository interface {
 
 type BankRepository interface {
 	usecases.Bank
+	usecases.BankActionsReverser
 	entities.CompanyOutside
 }
 
 type AccountRepository interface {
 	usecases.BankAccount
+	usecases.AccountActionsReverser
 	entities.UserTransferOutside
 }
 
 type ClientRepository interface {
 	usecases.Client
+	usecases.ClientActionsReverser
 }
 
 type AdminRepository interface {
@@ -43,10 +46,12 @@ type ManagerRepository interface {
 
 type OperatorRepository interface {
 	usecases.Operator
+	usecases.OperatorActionsReverser
 }
 
 type OuterSpecialistRepository interface {
 	usecases.OuterSpecialist
+	usecases.OuterSpecialistReverser
 	entities.CompanyTransferOutside
 }
 type UserRepository interface {
@@ -57,11 +62,33 @@ type UserRepository interface {
 	ManagerRepository
 }
 
-type ReverserRepository interface {
+type AccountReverserRepository interface {
 	usecases.AccountActionsReverser
-	usecases.BankActionsReverser
+}
+
+type ClientActionsReverserRepository interface {
 	usecases.ClientActionsReverser
+}
+
+type OperatorActionsReverserRepository interface {
 	usecases.OperatorActionsReverser
-	usecases.ManagerActionsReverser
+}
+
+
+
+type ReverserInfoRepository interface {
 	usecases.ReverserInfo
 }
+
+// func NewReverserRepository(accountReverser usecases.AccountActionsReverser, bankReverser usecases.BankActionsReverser,
+// 	clientReverser usecases.ClientActionsReverser, operatorReverser usecases.OperatorActionsReverser,
+// 	managerReverser usecases.ManagerActionsReverser, reverserInfo usecases.ReverserInfo) *ReverserRepository {
+// 	return &ReverserRepository{
+// 		AccountReverser:  accountReverser,
+// 		BankReverser:     bankReverser,
+// 		ClientReverser:   clientReverser,
+// 		OperatorReverser: operatorReverser,
+// 		ManagerReverser:  managerReverser,
+// 		ReverserInfo:     reverserInfo,
+// 	}
+// }
