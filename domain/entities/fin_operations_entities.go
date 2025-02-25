@@ -186,6 +186,10 @@ func (plan *InstallmentPlan) AmountForPayment() int {
 	return int(plan.amountForPayment)
 }
 
+func (plan *InstallmentPlan) AccountIdentifNum() string {
+	return plan.accountIdentifNum
+}
+
 func (plan *InstallmentPlan) CountOfPayments() int16 {
 	return plan.countOfPayments
 }

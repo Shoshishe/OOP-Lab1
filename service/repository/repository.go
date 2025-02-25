@@ -62,10 +62,27 @@ type UserRepository interface {
 	ManagerRepository
 }
 
+const (
+	AccountCreationAction     = "CreateAccount"
+	FreezeAccountAction       = "FreezeBankAccount"
+	BlockAccountAction        = "BlockBankAccount"
+	TransferMoneyAction       = "TransferMoney"
+	AddBankAction             = "AddBank"
+	SendPaymentRequest        = "SendCredits"
+	TakeInstallmentPlanAction = "TakeInstallmentPlan"
+	TakeLoanAction            = "TakeLoan"
+	CancelTransferAction      = "CancelTransferMoney"
+	SendInfoForPaymentAction  = "SendInfoForPayment"
+	TransferRequestAction     = "TransferRequest"
+)
+
 type AccountReverserRepository interface {
 	usecases.AccountActionsReverser
 }
 
+type BankActionReverserRepository interface {
+	usecases.BankActionsReverser
+}
 type ClientActionsReverserRepository interface {
 	usecases.ClientActionsReverser
 }
@@ -74,8 +91,9 @@ type OperatorActionsReverserRepository interface {
 	usecases.OperatorActionsReverser
 }
 
-
-
+type OuterSpecialistReverserRepository interface {
+	usecases.OuterSpecialistReverser
+}
 type ReverserInfoRepository interface {
 	usecases.ReverserInfo
 }

@@ -21,8 +21,13 @@ func NewBankController(serv serviceInterfaces.Bank, middleware Middleware) *Bank
 }
 
 func (bankController *BankController) addBank(writer http.ResponseWriter, req *http.Request) {
+	bankController.middleware.enableCors(writer)
 	var input entities.Bank
 	usrId, err := bankController.middleware.userIdentity(req)
+	if err != nil {
+		newErrorResponse(writer, http.StatusBadRequest, err.Error())
+		return
+	}
 	usrRole, err := bankController.middleware.userRole(req)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
@@ -45,6 +50,7 @@ func (bankController *BankController) addBank(writer http.ResponseWriter, req *h
 }
 
 func (bankController *BankController) getBanksList(writer http.ResponseWriter, req *http.Request) {
+	bankController.middleware.enableCors(writer)
 	var list []entities.Bank
 	usrRole, err := bankController.middleware.userRole(req)
 

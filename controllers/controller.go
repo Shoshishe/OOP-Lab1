@@ -58,6 +58,6 @@ func NewController(serv *service.Service) *Controller {
 	return &Controller{
 		bankController:    *NewBankController(serv.BankServ, *middleware),
 		accountController: *NewAccountController(serv.AccountServ, *middleware),
-		authController:    *NewAuthController(serv.AuthService, serv.TokenAuth),
+		authController:    *NewAuthController(serv.AuthService, serv.TokenAuth, *middleware),
 	}
 }

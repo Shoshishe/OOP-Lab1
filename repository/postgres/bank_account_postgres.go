@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"main/domain/entities"
 	"main/service/repository"
-
-	"github.com/lib/pq"
 )
 
 type BankAccountPostgres struct {
@@ -119,7 +117,7 @@ func (bankAccountRepo *BankAccountPostgres) BlockBankAccount(accountIdenitificat
 	}
 	args := make([]string, 0, 1)
 	args = append(args, accountIdenitificationNum)
-	err = InsertAction(tx, bankAccountRepo.db, "BlockBankAccount", args, usrId)
+	err = InsertAction(tx, bankAccountRepo.db, repository.BlockAccountAction, args, usrId)
 	if err != nil {
 		return err
 	}
@@ -256,16 +254,17 @@ func (bankAccountRepo *BankAccountPostgres) CloseBankAccount(accountIdentifNum e
 		tx.Rollback()
 		return err
 	}
-	actionInsertQuery := fmt.Sprintf("INSERT INTO %s (user_id, first_action_type, first_action_args) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET"+
-		"second_action_type=first_action_type, second_action_args=first_action_args,"+
-		"first_action_type=EXCLUDED.first_action_type, first_action_args=EXCLUDED.first_action_args", ActionsTable)
-	args := make([]string, 0, 1)
-	args = append(args, accountIdentifNum)
-	_, err = bankAccountRepo.db.Exec(actionInsertQuery, usrId, "CloseBankAccount", pq.Array(args))
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
+	// actionInsertQuery := fmt.Sprintf("INSERT INTO %s (user_id, first_action_type, first_action_args) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET"+
+	// 	"second_action_type=first_action_type, second_action_args=first_action_args,"+
+	// 	"first_action_type=EXCLUDED.first_action_type, first_action_args=EXCLUDED.first_action_args", ActionsTable)
+	// args := make([]string, 0, 1)
+	// args = append(args, accountIdentifNum)
+	// _, err = bankAccountRepo.db.Exec(actionInsertQuery, usrId, "CloseBankAccount", pq.Array(args))
+	
+	// if err != nil {
+	// 	tx.Rollback()
+	// 	return err
+	// }
 	tx.Commit()
 	return err
 }

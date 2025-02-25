@@ -36,3 +36,9 @@ func (middleware *Middleware) userRole(req *http.Request) (entities.UserRole, er
 	}
 	return role, nil
 }
+
+func (middleware *Middleware) enableCors(writer http.ResponseWriter) {
+	writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+    writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH")
+    writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+}

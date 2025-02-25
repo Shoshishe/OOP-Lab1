@@ -72,7 +72,7 @@ func (repos *OperatorPostgres) CancelTransferOperation(operationId int, usrId in
 			return err
 		}
 	}
-	if operationName != "TransferMoney" {
+	if operationName != repository.TransferMoneyAction {
 		return errors.New("incorrect operation")
 	}
 	tx, err := repos.db.Begin()
@@ -97,9 +97,9 @@ func (repos *OperatorPostgres) CancelTransferOperation(operationId int, usrId in
 		tx.Rollback()
 		return err
 	}
-	args := make([]string, 0, 3)
-	args = append(args, senderAccountNum, receiverAccountNum, fmt.Sprint(moneyAmount))
-	err = postgres.InsertAction(tx, repos.db, "CancelTransferMoney", args, usrId)
+	args := make([]string, 0, 4)
+	args = append(args,fmt.Sprint(operationId), senderAccountNum, receiverAccountNum, fmt.Sprint(moneyAmount))
+	err = postgres.InsertAction(tx, repos.db, repository.CancelTransferAction, args, usrId)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (repos *OperatorPostgres) ReverseCancelTransferOperation(operationId, usrId
 			return err
 		}
 	}
-	if operationName != "TransferMoney" {
+	if operationName != repository.CancelTransferAction {
 		return errors.New("incorrect operation")
 	}
 	tx, err := repos.db.Begin()

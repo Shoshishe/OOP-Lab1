@@ -10,16 +10,19 @@ import (
 type AuthController struct {
 	service serviceInterfaces.Authorization
 	tokenAuth serviceInterfaces.TokenAuth
+	middleware Middleware
 }
 
-func NewAuthController(authService serviceInterfaces.Authorization, tokenService serviceInterfaces.TokenAuth) *AuthController {
+func NewAuthController(authService serviceInterfaces.Authorization, tokenService serviceInterfaces.TokenAuth, middleware Middleware) *AuthController {
 	return &AuthController{
 		service: authService,
 		tokenAuth:  tokenService,
+		middleware: middleware,
 	}
 }
 
 func (controller *AuthController) signUp(writer http.ResponseWriter, req *http.Request) {
+	controller.middleware.enableCors(writer)
 	var input request.ClientSignUpModel
 	err := json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {
@@ -40,8 +43,9 @@ type SignInInput struct {
 }
 
 func (controller *AuthController) signIn(writer http.ResponseWriter, req *http.Request) {
-	var input SignInInput
+	controller.middleware.enableCors(writer)
 
+	var input SignInInput
 	if err := json.NewDecoder(req.Body).Decode(&input); err != nil {
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())
 		return

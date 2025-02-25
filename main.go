@@ -3,6 +3,7 @@ package main
 import (
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
+	"github.com/rs/cors"
 	"log"
 	"main/controllers"
 	"main/repository/postgres"
@@ -34,8 +35,9 @@ func main() {
 	controllers := controllers.NewController(serv)
 
 	mux := http.NewServeMux()
+	muxHandler := cors.Default().Handler(mux)
 	controllers.RegisterRoutes(mux)
-	err = http.ListenAndServe(viper.GetString("net.Host")+viper.GetString("net.Port"), mux)
+	err = http.ListenAndServe(viper.GetString("net.Host")+viper.GetString("net.Port"), muxHandler)
 	if err != nil {
 		log.Fatal(err)
 	}

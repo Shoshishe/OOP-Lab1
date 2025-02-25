@@ -24,6 +24,7 @@ func NewAccountController(serv serviceInterfaces.BankAccount, middleware Middlew
 }
 
 func (controller *AccountController) addAccount(writer http.ResponseWriter, req *http.Request) {
+	controller.middleware.enableCors(writer)
 	var input request.BankAccountModel
 	err := json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {
@@ -49,6 +50,7 @@ func (controller *AccountController) addAccount(writer http.ResponseWriter, req 
 }
 
 func (controller *AccountController) freezeAccount(writer http.ResponseWriter, req *http.Request) {
+	controller.middleware.enableCors(writer)
 	usrId, err := controller.middleware.userRole(req)
 	if err != nil {
 		return
@@ -68,6 +70,7 @@ func (controller *AccountController) freezeAccount(writer http.ResponseWriter, r
 }
 
 func (controller *AccountController) blockAccount(writer http.ResponseWriter, req *http.Request) {
+	controller.middleware.enableCors(writer)
 	usrId, err := controller.middleware.userIdentity(req)
 	if err != nil {
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())
@@ -88,6 +91,7 @@ func (controller *AccountController) blockAccount(writer http.ResponseWriter, re
 }
 
 func (controller *AccountController) putMoney(writer http.ResponseWriter, req *http.Request) {
+	controller.middleware.enableCors(writer)
 	usrRole, err := controller.middleware.userRole(req)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
@@ -108,6 +112,7 @@ func (controller *AccountController) putMoney(writer http.ResponseWriter, req *h
 }
 
 func (controller *AccountController) takeMoney(writer http.ResponseWriter, req *http.Request) {
+	controller.middleware.enableCors(writer)
 	usrRole, err := controller.middleware.userRole(req)
 	if err != nil {
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())
@@ -129,6 +134,7 @@ func (controller *AccountController) takeMoney(writer http.ResponseWriter, req *
 }
 
 func (controller *AccountController) closeAccount(writer http.ResponseWriter, req *http.Request) {
+	controller.middleware.enableCors(writer)
 	usrId, err := controller.middleware.userIdentity(req)
 	if err != nil {
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())
@@ -149,6 +155,7 @@ func (controller *AccountController) closeAccount(writer http.ResponseWriter, re
 }
 
 func (controller *AccountController) transferMoney(writer http.ResponseWriter, req *http.Request) {
+	controller.middleware.enableCors(writer)
 	var input request.TransferModel
 	err := json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {

@@ -28,7 +28,7 @@ func (repos *OuterSpecialistPostgres) SendInfoForPayment(req entities.PaymentReq
 	}
 	args := make([]string, 0, 3)
 	args = append(args, fmt.Sprint(req.ClientId()), req.AccountNum(), fmt.Sprint(req.Amount()))
-	err = postgres.InsertAction(tx, repos.db, "SendInfoForPayment", args, usrId)
+	err = postgres.InsertAction(tx, repos.db, repository.SendInfoForPaymentAction, args, usrId)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (repos *OuterSpecialistPostgres) TransferRequest(transfer entities.Transfer
 	}
 	args := make([]string, 0, 4)
 	args = append(args, fmt.Sprint(transfer.TransferOwnerId()),transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), fmt.Sprint(transfer.SumOfTransfer()))
-	err = postgres.InsertAction(tx, repos.db, "TransferRequest", args, usrId)
+	err = postgres.InsertAction(tx, repos.db, repository.TransferRequestAction, args, usrId)
 	if err != nil {
 		return err
 	}
