@@ -9,7 +9,7 @@ import (
 
 const (
 	UsersTable = "users"
-	BanksTable = "banks"
+	BanksTable = "companies"
 	AccountsTable = "accounts"
 	LoansTable = "loans"
 	PaymentRequestsTable = "requests"
@@ -49,7 +49,7 @@ func ReverseAction(tx *sql.Tx,db *sql.DB, args []string, usrId int) error {
 	row := db.QueryRow(query, usrId, pq.Array(args))
 	err := row.Scan(&emptyCheck)
 	if err == sql.ErrNoRows {
-		query = fmt.Sprintf("INSERT INTO %s (second_action_id, second_action_args, second_action_type) VALUES ($1,$2,$3)", AccountsTable)
+		query = fmt.Sprintf("INSERT INTO %s (second_action_id, second_action_args, second_action_type) VALUES ($1,$2,$3)", ActionsTable)
 		var zeroSlice []string
 		_, err = db.Exec(query, 0, pq.Array(zeroSlice), "")
 		if err != nil {
@@ -57,9 +57,9 @@ func ReverseAction(tx *sql.Tx,db *sql.DB, args []string, usrId int) error {
 			return err
 		}
 	}
-	query = fmt.Sprintf("INSERT INTO %s (first_action_id, first_action_args, first_action_type) VALUES ($1,$2,$3)", AccountsTable)
+	query = fmt.Sprintf("UPDATE %s SET first_action_id=$1, first_action_args=$2, first_action_type=$3 WHERE user_id=$4", ActionsTable)
 	var zeroSlice []string
-	_, err = db.Exec(query, 0, pq.Array(zeroSlice), "")
+	_, err = db.Exec(query, 0, pq.Array(zeroSlice), "", usrId)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -67,13 +67,12 @@ func ReverseAction(tx *sql.Tx,db *sql.DB, args []string, usrId int) error {
 	return nil
 }
 
-func InsertAction(tx *sql.Tx, db *sql.DB, name string, args []string, usrId int) error {
-	actionInsertQuery := fmt.Sprintf("INSERT INTO %s (user_id, first_action_type, first_action_args) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET"+
-		"second_action_type=first_action_type, second_action_args=first_action_args,"+
-		"first_action_type=EXCLUDED.first_action_type, first_action_args=EXCLUDED.first_action_args", ActionsTable)
-	_, err := db.Exec(actionInsertQuery, usrId, "TransferMoney", pq.Array(args))
+func InsertAction(tx *sql.Tx, name string, args []string, usrId int) error {
+	actionInsertQuery := fmt.Sprintf("INSERT INTO %[1]v (user_id, first_action_type, first_action_args) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET"+
+		" second_action_type=%[1]v.first_action_type, second_action_args=%[1]v.first_action_args, second_action_id=%[1]v.first_action_id,"+
+		" first_action_type=EXCLUDED.first_action_type, first_action_args=EXCLUDED.first_action_args, first_action_id=nextval(%s)", ActionsTable, "'actions_id_seq'")
+	_, err := tx.Exec(actionInsertQuery, usrId, name, pq.Array(args))
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 	return nil

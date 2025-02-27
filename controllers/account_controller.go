@@ -3,9 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"main/domain/entities"
-	domainErrors "main/domain/entities/domain_errors"
 	"main/service/entities_models/request"
-	serviceErrors "main/service/errors"
 	serviceInterfaces "main/service/service_interfaces"
 	"net/http"
 	"strconv"
@@ -178,18 +176,4 @@ func (controller *AccountController) transferMoney(writer http.ResponseWriter, r
 		return
 	}
 	okResponse(writer)
-}
-
-func lastErrorHandling(writer http.ResponseWriter, err error) {
-	switch err.(type) {
-	case *serviceErrors.RoleError:
-		newErrorResponse(writer, http.StatusUnauthorized, err.Error())
-		return
-	case *domainErrors.InvalidField:
-		newErrorResponse(writer, http.StatusBadRequest, err.Error())
-		return
-	default:
-		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
-		return
-	}
 }

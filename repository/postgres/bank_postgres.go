@@ -2,13 +2,12 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"main/domain/entities"
 	persistance "main/repository/postgres/entities_models"
 	persistanceMappers "main/repository/postgres/mappers"
 	"main/service/repository"
-
-	"github.com/lib/pq"
 )
 
 type BankPostgres struct {
@@ -21,22 +20,18 @@ func (bankRepo *BankPostgres) AddBank(bank entities.Bank, usrId int) error {
 	if err != nil {
 		return err
 	}
-	query := fmt.Sprintf("INSERT INTO %s (name, adress, payers_acc_num, company_type, bank_ident_num, type) values ($1,$2,$3,$4,$5,$6)", BanksTable)
-	_, err = bankRepo.db.Exec(query, bank.Info.LegalName(), bank.Info.LegalAdress(), bank.Info.PayersAccountNumber(), bank.Info.CompanyType(), bank.Info.BankIdentificationNum(), bank.Type)
+	defer tx.Rollback()
+	query := fmt.Sprintf("INSERT INTO %s (name, adress, payers_acc_num, company_type, bank_ident_num, bank_type) values ($1,$2,$3,$4,$5,$6)", BanksTable)
+	_, err = tx.Exec(query, bank.Info.LegalName(), bank.Info.LegalAdress(), bank.Info.PayersAccountNumber(), bank.Info.CompanyType(), bank.Info.BankIdentificationNum(), bank.Type)
 	if err != nil {
 		return err
 	}
-	actionInsertQuery := fmt.Sprintf("INSERT INTO %s (user_id, first_action_type, first_action_args) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET"+
-		"second_action_type=first_action_type, second_action_args=first_action_args," +
-		"first_action_type=EXCLUDED.first_action_type, first_action_args=EXCLUDED.first_action_args", ActionsTable)
 	args := make([]string, 0, 6)
-	args = append(args, bank.Info.LegalName(), bank.Info.LegalAdress(), bank.Info.PayersAccountNumber(), bank.Info.CompanyType(), bank.Info.CompanyType(), bank.Type)
-	_, err = bankRepo.db.Exec(actionInsertQuery, usrId, "AddBank", pq.Array(args))
+	args = append(args, bank.Info.LegalName(), bank.Info.LegalAdress(), bank.Info.PayersAccountNumber(), bank.Info.CompanyType(), bank.Info.BankIdentificationNum(), bank.Type)
+	err = InsertAction(tx, "AddBank", args, usrId)
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return err
@@ -50,13 +45,16 @@ func (bankRepo *BankPostgres) ReverseBankAddition(bank entities.Bank, usrId int)
 		return err
 	}
 	query := fmt.Sprintf("DELETE FROM %s WHERE name=$1", BanksTable)
-	_, err = bankRepo.db.Exec(query, bank.Info.LegalName())
+	_, err = tx.Exec(query, bank.Info.LegalName())
 	if err != nil {
 		return err
 	}
 	args := make([]string, 0, 6)
 	args = append(args, bank.Info.LegalName(), bank.Info.LegalAdress(), bank.Info.PayersAccountNumber(), bank.Info.CompanyType(), bank.Info.CompanyType(), bank.Type)
-	ReverseAction(tx, bankRepo.db, args, usrId)
+	err = ReverseAction(tx, bankRepo.db, args, usrId)
+	if err != nil {
+		return err
+	}
 	err = tx.Commit()
 	if err != nil {
 		return err
@@ -65,35 +63,38 @@ func (bankRepo *BankPostgres) ReverseBankAddition(bank entities.Bank, usrId int)
 }
 
 func (bankRepo *BankPostgres) GetBanksList(pagination int) ([]entities.Bank, error) {
-	offset := pagination * BanksPerRequestLimit
-	query := fmt.Sprintf("SELECT id,name,adress,payers_acc_num,company_type,bank_ident_num,bank_type FROM %s LIMIT %s OFFSET $1", BanksTable, fmt.Sprint(BanksPerRequestLimit))
+	var banksList []entities.Bank
+	offset := (pagination - 1) * BanksPerRequestLimit
+	query := fmt.Sprintf("SELECT id,name,adress,payers_acc_num,company_type,bank_ident_num,bank_type FROM %s WHERE bank_type != '' LIMIT %s OFFSET $1", BanksTable, fmt.Sprint(BanksPerRequestLimit))
 	rows, err := bankRepo.db.Query(query, fmt.Sprint(offset))
 	if err != nil {
 		return nil, err
 	}
-	banksPersistanceList := make([]persistance.BankPersistance, BanksPerRequestLimit)
-	banksList := make([]entities.Bank, BanksPerRequestLimit)
-	err = rows.Scan(&banksPersistanceList[0].Id, &banksPersistanceList[0].LegalName, &banksPersistanceList[0].LegalAdress,
-		&banksPersistanceList[0].PayersAccNumber, &banksPersistanceList[0].CompanyType, &banksPersistanceList[0].BankIdentifNum,
-		&banksPersistanceList[0].BankType)
+	if !rows.Next() {
+		return nil, errors.New("no companies to show :(")
+	}
+	bank := persistance.BankPersistance{}
+	err = rows.Scan(&bank.Id, &bank.LegalName, &bank.LegalAdress,
+		&bank.PayersAccNumber, &bank.CompanyType, &bank.BankIdentifNum,
+		&bank.BankType)
 	if err != nil {
 		return nil, err
 	}
-	tempBank, err := persistanceMappers.ToBankEntity(&banksPersistanceList[0])
-	banksList[0] = *tempBank
+	tempBank, err := persistanceMappers.ToBankEntity(&bank)
 	if err != nil {
 		return nil, err
 	}
+	banksList = append(banksList, *tempBank)
 	i := 1
 	for rows.Next() {
-		err = rows.Scan(&banksPersistanceList[i].Id, &banksPersistanceList[i].LegalName, &banksPersistanceList[i].LegalAdress,
-			&banksPersistanceList[i].PayersAccNumber, &banksPersistanceList[i].CompanyType, &banksPersistanceList[i].BankIdentifNum,
-			&banksPersistanceList[i].BankType)
+		err = rows.Scan(&bank.Id, &bank.LegalName, &bank.LegalAdress,
+			&bank.PayersAccNumber, &bank.CompanyType, &bank.BankIdentifNum,
+			&bank.BankType)
 		if err != nil {
 			return nil, err
 		}
-		tempBank, err := persistanceMappers.ToBankEntity(&banksPersistanceList[0])
-		banksList[0] = *tempBank
+		tempBank, err := persistanceMappers.ToBankEntity(&bank)
+		banksList = append(banksList, *tempBank)
 		if err != nil {
 			return nil, err
 		}
@@ -104,27 +105,26 @@ func (bankRepo *BankPostgres) GetBanksList(pagination int) ([]entities.Bank, err
 
 func (bankRepo *BankPostgres) CheckBankExistance(bankIdentifNum entities.BankIdentificationNum) (bool, error) {
 	var exists bool
-	query := fmt.Sprintf("SELECT true FROM %s WHERE bank_ident_num=$1 limit 1", BanksTable)
-	row := bankRepo.db.QueryRow(query, bankIdentifNum)
-	err := row.Scan(exists)
-	if err != nil {
+	query := fmt.Sprintf("SELECT 1 FROM %s WHERE bank_ident_num=$1 limit 1", BanksTable)
+	if err := bankRepo.db.QueryRow(query, bankIdentifNum).Scan(&exists); err == nil {
+		return true, nil
+	} else if err == sql.ErrNoRows {
+		return false, nil
+	} else {
 		return false, err
 	}
-	return exists, nil
 }
 
 func (bankRepo *BankPostgres) CheckNameUniqueness(legalName string) (bool, error) {
-	var count_of_rows int
-	query := fmt.Sprintf("SELECT FROM %s WHERE name=$1 RETURNING ROW_NUMBER()", BanksTable)
-	rows, err := bankRepo.db.Query(query, legalName)
-	if err != nil {
+	var exists bool
+	query := fmt.Sprintf("SELECT 1 FROM %s WHERE name=$1", BanksTable)
+	if err := bankRepo.db.QueryRow(query, legalName).Scan(&exists); err == nil {
+		return false, nil
+	} else if err == sql.ErrNoRows {
+		return true, nil
+	} else {
 		return false, err
 	}
-	err = rows.Scan(count_of_rows)
-	if err != nil {
-		return false, err
-	}
-	return count_of_rows == 1, nil
 }
 
 func NewBankPostgres(db *sql.DB) *BankPostgres {

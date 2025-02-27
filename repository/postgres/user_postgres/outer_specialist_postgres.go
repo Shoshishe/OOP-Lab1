@@ -21,14 +21,14 @@ func (repos *OuterSpecialistPostgres) SendInfoForPayment(req entities.PaymentReq
 		return err
 	}
 	query := fmt.Sprintf("INSERT INTO %s (client_id,account_num, amount, pasport_series, pasport_num) SELECT $1, $2, $3, pasport_series, pasport_num FROM %s WHERE id=$1", postgres.PaymentRequestsTable, postgres.UsersTable)
-	_, err = repos.db.Exec(query, req.ClientId(), req.AccountNum(), req.Amount())
+	_, err = tx.Exec(query, req.ClientId(), req.AccountNum(), req.Amount())
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	args := make([]string, 0, 3)
 	args = append(args, fmt.Sprint(req.ClientId()), req.AccountNum(), fmt.Sprint(req.Amount()))
-	err = postgres.InsertAction(tx, repos.db, repository.SendInfoForPaymentAction, args, usrId)
+	err = postgres.InsertAction(tx,repository.SendInfoForPaymentAction, args, usrId)
 	if err != nil {
 		return err
 	}
@@ -43,14 +43,14 @@ func (repos *OuterSpecialistPostgres) TransferRequest(transfer entities.Transfer
 		return err
 	}
 	query := fmt.Sprintf("INSERT INTO %s (owner_id, sender_acc_num, receiver_acc_num, amount) VALUES ($1,$2,$3, $4)", postgres.TransfersTable)
-	_, err = repos.db.Exec(query, transfer.TransferOwnerId(), transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), transfer.SumOfTransfer())
+	_, err = tx.Exec(query, transfer.TransferOwnerId(), transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), transfer.SumOfTransfer())
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	args := make([]string, 0, 4)
 	args = append(args, fmt.Sprint(transfer.TransferOwnerId()),transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), fmt.Sprint(transfer.SumOfTransfer()))
-	err = postgres.InsertAction(tx, repos.db, repository.TransferRequestAction, args, usrId)
+	err = postgres.InsertAction(tx, repository.TransferRequestAction, args, usrId)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (repos *OuterSpecialistPostgres) ReverseTransferRequest(transfer entities.T
 		return err
 	}
 	query := fmt.Sprintf("DELETE FROM %s WHERE owner_id=$1 AND sender_acc_num=$2 AND receiver_acc_num=$3 AND amount=$4", postgres.TransfersTable)
-	_, err = repos.db.Exec(query, transfer.TransferOwnerId(), transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), transfer.SumOfTransfer())
+	_, err = tx.Exec(query, transfer.TransferOwnerId(), transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), transfer.SumOfTransfer())
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -98,7 +98,7 @@ func (repos *OuterSpecialistPostgres) DoesAccountBelongToNonOuterUser(accountIde
 		return false, err
 	}
 	accountOwnerQuery := fmt.Sprintf("SELECT 1 FROM %s acd WHERE acd.account_identif_num=$1 INNER JOIN %s ud ON ud.id=acd.user_id RETURNING ud.id", postgres.AccountsTable, postgres.UsersTable)
-	row := repos.db.QueryRow(accountOwnerQuery, accountIdentifNum)
+	row := tx.QueryRow(accountOwnerQuery, accountIdentifNum)
 	err = row.Scan(&accountOwnerId)
 	if err != nil {
 		err := tx.Rollback()
@@ -108,7 +108,7 @@ func (repos *OuterSpecialistPostgres) DoesAccountBelongToNonOuterUser(accountIde
 		return false, err
 	}
 	nonSharedCompaniesQuery := fmt.Sprintf("SELECT company_id FROM %s WHERE user_id=$1 AND company_id NOT IN (SELECT company_id FROM %s WHERE user_id = $2)", postgres.CompaniesWorkersTable, postgres.CompaniesWorkersTable)
-	row = repos.db.QueryRow(nonSharedCompaniesQuery, accountOwnerId, specialistId)
+	row = tx.QueryRow(nonSharedCompaniesQuery, accountOwnerId, specialistId)
 	if row.Err() == sql.ErrNoRows {
 		return false, errors.New("no distinct companies between users")
 	}

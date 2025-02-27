@@ -4,18 +4,19 @@ import (
 	"encoding/json"
 	"main/service/entities_models/request"
 	serviceInterfaces "main/service/service_interfaces"
+	"main/utils"
 	"net/http"
 )
 
 type AuthController struct {
-	service serviceInterfaces.Authorization
-	tokenAuth serviceInterfaces.TokenAuth
+	service    serviceInterfaces.Authorization
+	tokenAuth  serviceInterfaces.TokenAuth
 	middleware Middleware
 }
 
 func NewAuthController(authService serviceInterfaces.Authorization, tokenService serviceInterfaces.TokenAuth, middleware Middleware) *AuthController {
 	return &AuthController{
-		service: authService,
+		service:    authService,
 		tokenAuth:  tokenService,
 		middleware: middleware,
 	}
@@ -29,6 +30,7 @@ func (controller *AuthController) signUp(writer http.ResponseWriter, req *http.R
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())
 		return
 	}
+	input.Password = utils.GenerateHashedPassword(input.Password)
 	err = controller.service.AddUser(input)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
@@ -38,7 +40,7 @@ func (controller *AuthController) signUp(writer http.ResponseWriter, req *http.R
 }
 
 type SignInInput struct {
-	FullName string `json:"full_name" binding:"required"`
+	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
@@ -51,9 +53,10 @@ func (controller *AuthController) signIn(writer http.ResponseWriter, req *http.R
 		return
 	}
 
-	token, err := controller.tokenAuth.GenerateToken(input.FullName, input.Password)
+	token, err := controller.tokenAuth.GenerateToken(input.Email, input.Password)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
+		return
 	}
 	writer.WriteHeader(http.StatusOK)
 	json, err := json.Marshal("token: " + token)

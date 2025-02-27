@@ -30,10 +30,7 @@ func NewBank(info Company, Type BankType) (*Bank, error) {
 		Info: info,
 		Type: Type,
 	}
-	err := errors.Join(
-		bank.Info.ValidateCompany(),
-		bank.ValidateBankType(),
-	)
+	err := bank.Info.validator.ValidateCompany(&info)
 	if err != nil {
 		return nil, err
 	}
@@ -46,47 +43,58 @@ func (bank *Bank) ValidateBankType() error {
 	}
 	return nil
 }
+
 type CompanyOutside interface {
 	CheckNameUniqueness(legalName Name) (bool, error)
 	CheckBankExistance(bankIdentifNum BankIdentificationNum) (bool, error)
 }
 
-type Company struct {
-	id                    int
-	legalName             Name
-	legalAdress           Adress
-	payersAccountNumber   PayersAccountNumber
-	companyType           CompanyType
-	bankIdentificationNum BankIdentificationNum
-	outsideInfo           CompanyOutside
+type BankOutside interface {
+	CheckNameUniqueness(legalName Name) (bool, error)
+}
+type companyValidator interface {
+	ValidateCompany(*Company) error
 }
 
-func NewCompany(legalName Name, legalAdress Adress,
-	payersAccountNum AccountIdenitificationNum, companyType CompanyType, bankIdentifNum BankIdentificationNum) (*Company, error) {
-	companyValue := &Company{
-		legalName:             legalName,
-		legalAdress:           legalAdress,
-		payersAccountNumber:   payersAccountNum,
-		companyType:           companyType,
-		bankIdentificationNum: bankIdentifNum,
-	}
-	err := companyValue.ValidateCompany()
-	if err != nil {
-		return nil, err
-	}
-	return companyValue, nil
+type bankValidatorPolicy struct {
+	companyValidator
+	validator *companyValidatorPolicy
 }
 
-func (company *Company) ValidateCompany() error {
+func (bankValidator *bankValidatorPolicy) ValidateCompany(company *Company) error {
 	return errors.Join(
-		company.ValidateLegalName(),
-		company.ValidateBankIdentifNum(),
-		company.ValidateCompanyType(),
+		bankValidator.validator.ValidateLegalName(company),
+		bankValidator.validator.ValidateCompanyType(company),
 	)
 }
 
-func (company *Company) ValidateLegalName() error {
-	isUnique, err := company.outsideInfo.CheckNameUniqueness(company.legalName)
+func NewBankValidatorPolicy(validator *companyValidatorPolicy) *bankValidatorPolicy {
+	return &bankValidatorPolicy{
+		validator: validator,
+	}
+}
+
+type companyValidatorPolicy struct {
+	companyValidator
+	outsideInfo CompanyOutside
+}
+
+func NewCompanyValidatorPolicy(outsideInfo CompanyOutside) *companyValidatorPolicy {
+	return &companyValidatorPolicy{
+		outsideInfo: outsideInfo,
+	}
+}
+
+func (companyValidator *companyValidatorPolicy) ValidateCompany(company *Company) error {
+	return errors.Join(
+		companyValidator.ValidateLegalName(company),
+		companyValidator.ValidateBankIdentifNum(company),
+		companyValidator.ValidateCompanyType(company),
+	)
+}
+
+func (companyValidator *companyValidatorPolicy) ValidateLegalName(company *Company) error {
+	isUnique, err := companyValidator.outsideInfo.CheckNameUniqueness(company.legalName)
 	if err != nil {
 		return err
 	}
@@ -96,8 +104,8 @@ func (company *Company) ValidateLegalName() error {
 	return nil
 }
 
-func (company *Company) ValidateBankIdentifNum() error {
-	exists, err := company.outsideInfo.CheckBankExistance(company.bankIdentificationNum)
+func (companyValidator *companyValidatorPolicy) ValidateBankIdentifNum(company *Company) error {
+	exists, err := companyValidator.outsideInfo.CheckBankExistance(company.bankIdentificationNum)
 	if err != nil {
 		return err
 	}
@@ -107,7 +115,7 @@ func (company *Company) ValidateBankIdentifNum() error {
 	return nil
 }
 
-func (company *Company) ValidateCompanyType() error {
+func (companyValidator *companyValidatorPolicy) ValidateCompanyType(company *Company) error {
 	var err error
 	switch company.companyType {
 	case LimitedLiabilityCompany, IndividualEnterpreneur:
@@ -118,6 +126,39 @@ func (company *Company) ValidateCompanyType() error {
 		err = domainErrors.NewInvalidField("invalid company type")
 	}
 	return err
+}
+
+func NewCompanyValidator(outsideInfo CompanyOutside) *companyValidatorPolicy {
+	return &companyValidatorPolicy{
+		outsideInfo: outsideInfo,
+	}
+}
+
+type Company struct {
+	id                    int
+	legalName             Name
+	legalAdress           Adress
+	payersAccountNumber   PayersAccountNumber
+	companyType           CompanyType
+	bankIdentificationNum BankIdentificationNum
+	validator             companyValidator
+}
+
+func NewCompany(legalName Name, legalAdress Adress,
+	payersAccountNum AccountIdenitificationNum, companyType CompanyType, bankIdentifNum BankIdentificationNum, validator companyValidator) (*Company, error) {
+	companyValue := &Company{
+		validator:             validator,
+		legalName:             legalName,
+		legalAdress:           legalAdress,
+		payersAccountNumber:   payersAccountNum,
+		companyType:           companyType,
+		bankIdentificationNum: bankIdentifNum,
+	}
+	err := validator.ValidateCompany(companyValue)
+	if err != nil {
+		return nil, err
+	}
+	return companyValue, nil
 }
 
 func (company *Company) Id() int {

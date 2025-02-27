@@ -3,6 +3,7 @@ package entities
 import (
 	"errors"
 	domainErrors "main/domain/entities/domain_errors"
+	"strconv"
 )
 
 const (
@@ -79,7 +80,7 @@ func NewUser(outsideInfo UserOutside, password string, email string, options ...
 		if err := usr.ValidateFullInput(); err != nil {
 			return nil, err
 		}
-	case RoleAdmin:	
+	case RoleAdmin:
 		if err := errors.Join(
 			usr.ValidateEmail(),
 			usr.ValidatePassword(),
@@ -87,7 +88,7 @@ func NewUser(outsideInfo UserOutside, password string, email string, options ...
 		); err != nil {
 			return nil, err
 		}
-	case RoleManager: 
+	case RoleManager:
 		if err := errors.Join(
 			usr.ValidateEmail(),
 			usr.ValidatePassword(),
@@ -95,7 +96,7 @@ func NewUser(outsideInfo UserOutside, password string, email string, options ...
 		); err != nil {
 			return nil, err
 		}
-	case RoleOperator: 	
+	case RoleOperator:
 		if err := errors.Join(
 			usr.ValidateEmail(),
 			usr.ValidateFullName(),
@@ -112,8 +113,14 @@ func NewUser(outsideInfo UserOutside, password string, email string, options ...
 		); err != nil {
 			return nil, err
 		}
+	case RoleUser:
+		if err := errors.Join(
+			usr.ValidateFullInput(),
+		); err != nil {
+			return nil, err
+		}
 	default:
-		return nil, domainErrors.NewNotPermitted("incorrect role")	
+		return nil, domainErrors.NewNotPermitted("incorrect role")
 	}
 	return usr, nil
 }
@@ -162,6 +169,10 @@ func (usr *User) ValidatePhone() error {
 	if len(usr.mobilePhone) == 0 {
 		return domainErrors.NewInvalidField("invalid phone info")
 	}
+	_, err := strconv.ParseInt(usr.mobilePhone, 10, 64)
+	if err != nil {
+		return domainErrors.NewInvalidField("phone is not a valid number")
+	}
 	return nil
 }
 
@@ -196,9 +207,15 @@ func WithPasportNum(pasportNum IdentifNum) func(usr *User) {
 	}
 }
 
-func WithUserRole(usrRole UserRole) (func (usr *User)) {
+func WithUserRole(usrRole UserRole) func(usr *User) {
 	return func(usr *User) {
 		usr.roleType = usrRole
+	}
+}
+
+func WithUserId(usrId int) func(usr *User) {
+	return func(usr *User) {
+		usr.id = usrId
 	}
 }
 

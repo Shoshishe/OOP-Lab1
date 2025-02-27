@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"main/domain/entities"
+	persistance "main/repository/postgres/entities_models"
+	persistanceMappers "main/repository/postgres/mappers"
 	"main/service/repository"
 )
 
@@ -19,8 +21,8 @@ func (authRepo *AuthPostgres) AddUser(user entities.User) error {
 	if err != nil {
 		return err
 	}
-	query := fmt.Sprintf("INSERT INTO %s (full_name, pasport_series, phone_number, email, password, role_id) VALUES ($1,$2,$3,$4,$5,$6) RETURNING ID", UsersTable)
-	row := authRepo.db.QueryRow(query, user.FullName(), user.PasportSeries(), user.MobilePhone(), user.Email(), user.Password(), user.RoleType())
+	query := fmt.Sprintf("INSERT INTO %s (full_name, pasport_series, phone_number, email, password, role_id, pasport_num) VALUES ($1,$2,$3,$4,$5,$6, $7) RETURNING ID", UsersTable)
+	row := tx.QueryRow(query, user.FullName(), user.PasportSeries(), user.MobilePhone(), user.Email(), user.Password(), user.RoleType(), user.PasportNum())
 	if err := row.Scan(&id); err != nil {
 		rollbackErr := tx.Rollback()
 		err = errors.Join(rollbackErr, err)
@@ -33,18 +35,28 @@ func (authRepo *AuthPostgres) AddUser(user entities.User) error {
 	return nil
 }
 
-func (authRepo *AuthPostgres) GetUser(fullName, password string) (*entities.User, error) {
-	var user entities.User
-	query := fmt.Sprintf("SELECT * FROM %s WHERE full_name=$1 and password=$2", UsersTable)
-	row := authRepo.db.QueryRow(query, fullName, password)
-	if err := row.Scan(&user); err != nil {
+func (authRepo *AuthPostgres) GetUser(email, password string) (*entities.User, error) {
+	var persistanceUsr persistance.UserPersistance
+
+	query := fmt.Sprintf("SELECT id, full_name, pasport_series, phone_number, email, password, role_id, pasport_num FROM %s WHERE email=$1 and password=$2", UsersTable)
+	row := authRepo.db.QueryRow(query, email, password)
+	if err := row.Scan(&persistanceUsr.Id, &persistanceUsr.FullName, &persistanceUsr.PasportSeries,
+		&persistanceUsr.MobilePhone, &persistanceUsr.Email, &persistanceUsr.Password,
+		&persistanceUsr.RoleType, &persistanceUsr.PasportIdentifNum); err != nil {
 		return &entities.User{}, err
 	}
-	return &user, nil
+
+	return persistanceMappers.ToUserEntity(persistanceUsr, authRepo)
 }
 
-func (authRepo *AuthPostgres) GetRole(userId int) (entities.UserRole, error) {
-	return entities.RolePendingUser, nil
+func (authRepo *AuthPostgres) GetUserRole(userId int) (entities.UserRole, error) {
+	var usrRole entities.UserRole
+	query := fmt.Sprintf("SELECT role_id FROM %s WHERE id=$1", UsersTable)
+	row := authRepo.db.QueryRow(query, userId)
+	if err := row.Scan(&usrRole); err != nil {
+		return 0, err
+	}
+	return usrRole, nil
 }
 
 func NewAuthPostgres(db *sql.DB) *AuthPostgres {

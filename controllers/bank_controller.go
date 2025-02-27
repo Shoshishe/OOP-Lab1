@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
-	"main/domain/entities"
+	"main/service/entities_models/request"
 	serviceInterfaces "main/service/service_interfaces"
 	"net/http"
 	"strconv"
@@ -22,7 +22,7 @@ func NewBankController(serv serviceInterfaces.Bank, middleware Middleware) *Bank
 
 func (bankController *BankController) addBank(writer http.ResponseWriter, req *http.Request) {
 	bankController.middleware.enableCors(writer)
-	var input entities.Bank
+	var input request.BankModel
 	usrId, err := bankController.middleware.userIdentity(req)
 	if err != nil {
 		newErrorResponse(writer, http.StatusBadRequest, err.Error())
@@ -32,9 +32,6 @@ func (bankController *BankController) addBank(writer http.ResponseWriter, req *h
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
 		return
-	}
-	if usrRole != entities.RoleAdmin {
-		newErrorResponse(writer, http.StatusUnauthorized, "access denied")
 	}
 	err = json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {
@@ -51,16 +48,10 @@ func (bankController *BankController) addBank(writer http.ResponseWriter, req *h
 
 func (bankController *BankController) getBanksList(writer http.ResponseWriter, req *http.Request) {
 	bankController.middleware.enableCors(writer)
-	var list []entities.Bank
 	usrRole, err := bankController.middleware.userRole(req)
 
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	if usrRole == entities.RolePendingUser {
-		newErrorResponse(writer, http.StatusUnauthorized, "request still pending")
 		return
 	}
 
@@ -70,14 +61,15 @@ func (bankController *BankController) getBanksList(writer http.ResponseWriter, r
 		newErrorResponse(writer, http.StatusBadRequest, "bad argument params")
 		return
 	}
-	list, err = bankController.service.GetBanksList(pagination, usrRole)
+	banksList, err := bankController.service.GetBanksList(pagination, usrRole)
 	if err != nil {
 		lastErrorHandling(writer, err)
 		return
 	}
-	json, err := json.Marshal(list)
+	json, err := json.Marshal(banksList)
 	if err != nil {
 		newErrorResponse(writer, http.StatusInternalServerError, err.Error())
+		return
 	}
 	writer.WriteHeader(http.StatusOK)
 	writer.Write(json)

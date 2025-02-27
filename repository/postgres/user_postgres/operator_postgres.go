@@ -86,20 +86,20 @@ func (repos *OperatorPostgres) CancelTransferOperation(operationId int, usrId in
 		return err
 	}
 	changeSenderMoneyQuery := fmt.Sprintf("UPDATE %s SET amount=amount+$1 WHERE account_identif_num=$2", postgres.AccountsTable)
-	_, err = repos.db.Exec(changeSenderMoneyQuery, moneyAmount, senderAccountNum)
+	_, err = tx.Exec(changeSenderMoneyQuery, moneyAmount, senderAccountNum)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	changeReceiverMoneyQuery := fmt.Sprintf("UPDATE %s SET amount=amount-$1 WHERE account_identif_num=$2", postgres.AccountsTable)
-	_, err = repos.db.Exec(changeReceiverMoneyQuery, moneyAmount, receiverAccountNum)
+	_, err = tx.Exec(changeReceiverMoneyQuery, moneyAmount, receiverAccountNum)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	args := make([]string, 0, 4)
 	args = append(args,fmt.Sprint(operationId), senderAccountNum, receiverAccountNum, fmt.Sprint(moneyAmount))
-	err = postgres.InsertAction(tx, repos.db, repository.CancelTransferAction, args, usrId)
+	err = postgres.InsertAction(tx,repository.CancelTransferAction, args, usrId)
 	if err != nil {
 		return err
 	}
@@ -136,13 +136,13 @@ func (repos *OperatorPostgres) ReverseCancelTransferOperation(operationId, usrId
 		return err
 	}
 	changeSenderMoneyQuery := fmt.Sprintf("UPDATE %s SET amount=amount-$1 WHERE account_identif_num=$2", postgres.AccountsTable)
-	_, err = repos.db.Exec(changeSenderMoneyQuery, moneyAmount, senderAccountNum)
+	_, err = tx.Exec(changeSenderMoneyQuery, moneyAmount, senderAccountNum)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	changeReceiverMoneyQuery := fmt.Sprintf("UPDATE %s SET amount=amount+$1 WHERE account_identif_num=$2", postgres.AccountsTable)
-	_, err = repos.db.Exec(changeReceiverMoneyQuery, moneyAmount, receiverAccountNum)
+	_, err = tx.Exec(changeReceiverMoneyQuery, moneyAmount, receiverAccountNum)
 	if err != nil {
 		tx.Rollback()
 		return err

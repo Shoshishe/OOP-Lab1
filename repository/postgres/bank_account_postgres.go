@@ -19,14 +19,14 @@ func (bankAccountRepo *BankAccountPostgres) CreateAccount(account entities.BankA
 		return err
 	}
 	query := fmt.Sprintf("INSERT INTO %s (account_identif_num,bank_name,bank_identif_num) VALUES ($1,$2,$3)", AccountsTable)
-	_, err = bankAccountRepo.db.Exec(query, account.AccountIdenitificationNum, account.BankFullName, account.BankIdentificationNum)
+	_, err = tx.Exec(query, account.AccountIdenitificationNum, account.BankFullName, account.BankIdentificationNum)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	args := make([]string, 0, 3)
 	args = append(args, account.AccountIdenitificationNum(), account.BankFullName(), account.BankIdentificationNum())
-	err = InsertAction(tx, bankAccountRepo.db, "CreateAccount", args, usrId)
+	err = InsertAction(tx,"CreateAccount", args, usrId)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -73,8 +73,9 @@ func (bankAccountRepo *BankAccountPostgres) FreezeBankAccount(accountIdenitifica
 	}
 	args := make([]string, 0, 1)
 	args = append(args, accountIdenitificationNum)
-	err = InsertAction(tx, bankAccountRepo.db, "FreezeBankAccount", args, usrId)
+	err = InsertAction(tx, "FreezeBankAccount", args, usrId)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 	tx.Commit()
@@ -117,7 +118,7 @@ func (bankAccountRepo *BankAccountPostgres) BlockBankAccount(accountIdenitificat
 	}
 	args := make([]string, 0, 1)
 	args = append(args, accountIdenitificationNum)
-	err = InsertAction(tx, bankAccountRepo.db, repository.BlockAccountAction, args, usrId)
+	err = InsertAction(tx,repository.BlockAccountAction, args, usrId)
 	if err != nil {
 		return err
 	}
@@ -191,7 +192,7 @@ func (bankAccountRepo *BankAccountPostgres) TransferMoney(transfer entities.Tran
 	}
 	args := make([]string, 0, 3)
 	args = append(args, transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), fmt.Sprint(transfer.SumOfTransfer()))
-	err = InsertAction(tx, bankAccountRepo.db, "TransferMoney", args, usrId)
+	err = InsertAction(tx, "TransferMoney", args, usrId)
 	if err != nil {
 		return err
 	}
@@ -254,17 +255,6 @@ func (bankAccountRepo *BankAccountPostgres) CloseBankAccount(accountIdentifNum e
 		tx.Rollback()
 		return err
 	}
-	// actionInsertQuery := fmt.Sprintf("INSERT INTO %s (user_id, first_action_type, first_action_args) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET"+
-	// 	"second_action_type=first_action_type, second_action_args=first_action_args,"+
-	// 	"first_action_type=EXCLUDED.first_action_type, first_action_args=EXCLUDED.first_action_args", ActionsTable)
-	// args := make([]string, 0, 1)
-	// args = append(args, accountIdentifNum)
-	// _, err = bankAccountRepo.db.Exec(actionInsertQuery, usrId, "CloseBankAccount", pq.Array(args))
-	
-	// if err != nil {
-	// 	tx.Rollback()
-	// 	return err
-	// }
 	tx.Commit()
 	return err
 }

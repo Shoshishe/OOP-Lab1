@@ -20,14 +20,14 @@ func (clientRepo *ClientPostgres) SendCreditsForPayment(req entities.PaymentRequ
 		return err
 	}
 	query := fmt.Sprintf("INSERT INTO %s (client_id, company_id, account_num, full_name, amount) VALUES ($1,$2,$3,$4,$5)", postgres.PaymentRequestsTable)
-	_, err = clientRepo.db.Exec(query, req.ClientId(), req.CompanyId(), req.AccountNum(), req.RequesterFullName(), req.Amount())
+	_, err = tx.Exec(query, req.ClientId(), req.CompanyId(), req.AccountNum(), req.RequesterFullName(), req.Amount())
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	args := make([]string, 0, 5)
 	args = append(args, fmt.Sprint(req.ClientId()), fmt.Sprint(req.CompanyId()), req.AccountNum(), req.RequesterFullName(), fmt.Sprint(req.Amount()))
-	err = postgres.InsertAction(tx, clientRepo.db, repository.SendPaymentRequest, args, usrId)
+	err = postgres.InsertAction(tx,repository.SendPaymentRequest, args, usrId)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (clientRepo *ClientPostgres) ReverseSendCreditsForPayment(req entities.Paym
 		return err
 	}
 	query := fmt.Sprintf("DELETE FROM %s WHERE company_id=$1 AND client_id=$2", postgres.PaymentRequestsTable)
-	_, err = clientRepo.db.Exec(query, req.CompanyId(), req.ClientId())
+	_, err = tx.Exec(query, req.CompanyId(), req.ClientId())
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -62,14 +62,14 @@ func (clientRepo *ClientPostgres) TakeInstallmentPlan(plan entities.InstallmentP
 		return err
 	}
 	query := fmt.Sprintf("INSERT INTO %s (bank_provider_name, loan_amount, count_of_payments,start_date,end_date) VALUES ($1,$2,$3,$4,$5)", postgres.LoansTable)
-	_, err = clientRepo.db.Exec(query, plan.BankProviderName(), plan.AmountForPayment(), plan.CountOfPayments(), plan.StartOfTerm(), plan.EndOfTerm())
+	_, err = tx.Exec(query, plan.BankProviderName(), plan.AmountForPayment(), plan.CountOfPayments(), plan.StartOfTerm(), plan.EndOfTerm())
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	args := make([]string, 0, 6)
 	args = append(args, plan.BankProviderName(), fmt.Sprint(plan.AmountForPayment()), fmt.Sprint(plan.CountOfPayments()), plan.StartOfTerm().Format(time.DateOnly), plan.EndOfTerm().Format(time.DateOnly), plan.AccountIdentifNum())
-	err = postgres.InsertAction(tx, clientRepo.db, repository.TakeInstallmentPlanAction, args, usrId)
+	err = postgres.InsertAction(tx, repository.TakeInstallmentPlanAction, args, usrId)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (clientRepo *ClientPostgres) ReverseTakeInstallmentPlan(plan entities.Insta
 		return err
 	}
 	query := fmt.Sprintf("INSERT INTO %s (bank_provider_name, loan_amount, count_of_payments,start_date,end_date) VALUES ($1,$2,$3,$4,$5)", postgres.LoansTable)
-	_, err = clientRepo.db.Exec(query, plan.BankProviderName(), plan.AmountForPayment(), plan.CountOfPayments(), plan.StartOfTerm(), plan.EndOfTerm())
+	_, err = tx.Exec(query, plan.BankProviderName(), plan.AmountForPayment(), plan.CountOfPayments(), plan.StartOfTerm(), plan.EndOfTerm())
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -102,7 +102,7 @@ func (clientRepo *ClientPostgres) TakeLoan(loan entities.Loan, usrId int) error 
 		return err
 	}
 	query := fmt.Sprintf("INSERT INTO %s (bank_provider_name, account_identif_num, rate, loan_amount, start_of_loan, end_of_loan) VALUES ($1,$2,$3,$4,$5,$6)", postgres.LoansTable)
-	_, err = clientRepo.db.Exec(query, loan.BankProviderName(), loan.AccountIdenitificationNum(), loan.Rate(), loan.LoanAmount(),
+	_, err = tx.Exec(query, loan.BankProviderName(), loan.AccountIdenitificationNum(), loan.Rate(), loan.LoanAmount(),
 		loan.StartOfLoanTerm().Truncate(24*time.Hour).Format(time.DateOnly), loan.EndOfLoanTerm().Truncate(24*time.Hour).Format(time.DateOnly))
 	if err != nil {
 		tx.Rollback()
@@ -111,7 +111,7 @@ func (clientRepo *ClientPostgres) TakeLoan(loan entities.Loan, usrId int) error 
 	args := make([]string, 0, 3)
 	args = append(args, loan.BankProviderName(), loan.AccountIdenitificationNum(), loan.Rate(), fmt.Sprint(loan.LoanAmount()),
 		loan.StartOfLoanTerm().Truncate(24*time.Hour).Format(time.DateOnly), loan.EndOfLoanTerm().Truncate(24*time.Hour).Format(time.DateOnly))
-	err = postgres.InsertAction(tx, clientRepo.db, repository.TakeLoanAction, args, usrId)
+	err = postgres.InsertAction(tx, repository.TakeLoanAction, args, usrId)
 	if err != nil {
 		return err
 	}

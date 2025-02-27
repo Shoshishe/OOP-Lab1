@@ -10,7 +10,7 @@ type RoleAccess interface {
 	GetUserRole(userId int) (entities.UserRole, error)
 }
 type TokenAuth interface {
-	GenerateToken(fullName, password string) (string, error)
+	GenerateToken(email, password string) (string, error)
 	ParseToken(accessToken string) (int, error)
 	RoleAccess
 }

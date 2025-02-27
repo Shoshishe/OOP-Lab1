@@ -10,6 +10,7 @@ type Controller struct {
 	bankController    BankController
 	accountController AccountController
 	authController    AuthController
+	reverseController ReverseController
 	// services          *service.Service
 	// authService       service.TokenAuth
 }
@@ -29,6 +30,7 @@ func (controller *Controller) RegisterRoutes(mux *http.ServeMux) {
 	controller.authController.registerAuthorization(mux)
 	controller.bankController.registerBank(mux)
 	controller.accountController.registerAccounts(mux)
+	controller.reverseController.registerReverts(mux)
 }
 
 func (authController *AuthController) registerAuthorization(mux *http.ServeMux) {
@@ -49,15 +51,19 @@ func (accountController *AccountController) registerAccounts(mux *http.ServeMux)
 	mux.HandleFunc("PUT /api/bank_account/take/{account_identif_num}/{money_amount}", accountController.takeMoney)
 	mux.HandleFunc("PUT /api/bank_account/close/{account_identif_num}", accountController.closeAccount)
 	mux.HandleFunc("PUT /api/bank_account/transfer/", accountController.transferMoney)
+	//implement getting account and banks by user ids and we are good to go probably
 }
 
-
+func (reverseController *ReverseController) registerReverts(mux *http.ServeMux) {
+	mux.HandleFunc("PUT /api/reverse/{operation_id}", reverseController.Reverse)
+}
 
 func NewController(serv *service.Service) *Controller {
-	middleware := NewMiddleware(serv.TokenAuth)
+	middleware := NewMiddleware(serv)
 	return &Controller{
 		bankController:    *NewBankController(serv.BankServ, *middleware),
 		accountController: *NewAccountController(serv.AccountServ, *middleware),
 		authController:    *NewAuthController(serv.AuthService, serv.TokenAuth, *middleware),
+		reverseController: *NewReverseController(serv.ReverseServ, middleware),
 	}
 }

@@ -3,6 +3,7 @@ package service
 import (
 	"main/domain/entities"
 	domainErrors "main/domain/entities/domain_errors"
+	persistanceMappers "main/repository/postgres/mappers"
 	serviceErrors "main/service/errors"
 	"main/service/repository"
 	serviceInterfaces "main/service/service_interfaces"
@@ -22,15 +23,14 @@ type Reverser struct {
 	infoRepos               repository.ReverserInfoRepository
 }
 
-//TODO
-
 func NewReverser(accountReverser repository.AccountReverserRepository, clientReverser repository.ClientActionsReverserRepository,
 	operatorReverser repository.OperatorActionsReverserRepository,
-	infoRepos repository.ReverserInfoRepository) *Reverser {
+	infoRepos repository.ReverserInfoRepository, bankReverser repository.BankActionReverserRepository) *Reverser {
 	return &Reverser{
 		accountReverser:  accountReverser,
 		clientReverser:   clientReverser,
 		operatorReverser: operatorReverser,
+		bankReverser:     bankReverser,
 		infoRepos:        infoRepos,
 	}
 }
@@ -43,7 +43,7 @@ func (reverser *Reverser) getAction(actionId int) (string, []string, error) {
 	return action.ActionName(), action.ActionArgs(), nil
 }
 
-func (reverser *Reverser) Reverse(actionId int, usrId int, usrRole int) error {
+func (reverser *Reverser) Reverse(actionId, usrId, usrRole int) error {
 	actionName, args, err := reverser.getAction(actionId)
 	if err != nil {
 		return err
@@ -100,7 +100,12 @@ func (reverser *Reverser) Reverse(actionId int, usrId int, usrRole int) error {
 		if len(args) < 6 {
 			return domainErrors.NewInvalidField("invalid args count")
 		}
-		bankInfo, err := entities.NewCompany(args[0], args[1], args[2], args[3], args[4])
+		bankInfo, err := entities.NewCompany(args[0], args[1], args[2], args[3], args[4], entities.NewBankValidatorPolicy(
+			entities.NewCompanyValidator(
+				persistanceMappers.NewPersistanceOutsideInfo(),
+			),
+		),
+		)
 		if err != nil {
 			return err
 		}

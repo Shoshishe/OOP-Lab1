@@ -1,8 +1,12 @@
 package serviceInterfaces
 
-import "main/domain/entities"
+import (
+	"main/domain/entities"
+	"main/service/entities_models/request"
+	"main/service/entities_models/response"
+)
 
 type Bank interface {
-	GetBanksList(pagination int, userRole entities.UserRole) ([]entities.Bank, error)
-	AddBank(bank entities.Bank,userId int, userRole entities.UserRole) error
+	GetBanksList(pagination int, userRole entities.UserRole) ([]response.BankModel, error)
+	AddBank(bank request.BankModel,userId int, userRole entities.UserRole) error
 }

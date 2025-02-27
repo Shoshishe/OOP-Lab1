@@ -2,8 +2,8 @@ package main
 
 import (
 	_ "github.com/lib/pq"
-	"github.com/spf13/viper"
 	"github.com/rs/cors"
+	"github.com/spf13/viper"
 	"log"
 	"main/controllers"
 	"main/repository/postgres"
@@ -30,12 +30,19 @@ func main() {
 		postgres.NewAuthPostgres(db),
 		postgres.NewBankPostgres(db),
 		postgres.NewBankAccountPostgres(db),
+		postgres.NewReverserRepository(db),
 	)
 	serv := service.NewService(*repos)
 	controllers := controllers.NewController(serv)
 
 	mux := http.NewServeMux()
-	muxHandler := cors.Default().Handler(mux)
+	muxHandler := cors.New(
+		cors.Options{
+			AllowedOrigins: []string{"http://localhost:5173"},
+			AllowedHeaders: []string{"Accept", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization"},
+			AllowedMethods: []string{"GET", "POST", "PUT", "UPDATE", "DELETE", "OPTIONS"},
+		},
+	).Handler(mux)
 	controllers.RegisterRoutes(mux)
 	err = http.ListenAndServe(viper.GetString("net.Host")+viper.GetString("net.Port"), muxHandler)
 	if err != nil {

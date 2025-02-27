@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"main/domain/entities"
 	"main/service/entities_models/request"
 	"main/service/entities_models/response"
 	request_mappers "main/service/mappers/request"
@@ -20,8 +21,8 @@ const (
 )
 
 type tokenClaims struct {
-	jwt.Claims
-	id int
+	jwt.RegisteredClaims
+	Id int `json:"user_id"`
 }
 
 type AuthService struct {
@@ -32,7 +33,6 @@ type AuthService struct {
 }
 
 func (serv *AuthService) AddUser(user request.ClientSignUpModel) error {
-	user.Password = utils.GenerateHashedPassword(user.Password)
 	userEntity, err := request_mappers.ToUserEntitiy(user, serv.repos)
 	if err != nil {
 		return err
@@ -48,12 +48,16 @@ func (serv *AuthService) GetUser(fullName, password string) (*response.UserAuthM
 	return response_mappers.ToUserAuthModel(*usrEntity), err
 }
 
-func (serv *AuthService) GenerateToken(fullName, password string) (string, error) {
-	user, err := serv.repos.GetUser(fullName, password)
+func (serv *AuthService) GetUserRole(userId int) (entities.UserRole, error) {
+	return serv.repos.GetUserRole(userId)
+}
+
+func (serv *AuthService) GenerateToken(email, password string) (string, error) {
+	user, err := serv.repos.GetUser(email, utils.GenerateHashedPassword(password))
 	if err != nil {
 		return "", err
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, tokenClaims{jwt.RegisteredClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, tokenClaims{jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenTTL)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	},
@@ -63,7 +67,8 @@ func (serv *AuthService) GenerateToken(fullName, password string) (string, error
 }
 
 func (serv *AuthService) ParseToken(accessToken string) (int, error) {
-	token, err := jwt.ParseWithClaims(accessToken, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+	customClaims := &tokenClaims{}
+	token, err := jwt.ParseWithClaims(accessToken, customClaims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("invalid signing method")
 		}
@@ -76,7 +81,7 @@ func (serv *AuthService) ParseToken(accessToken string) (int, error) {
 	if !ok {
 		return 0, errors.New("token type is not of type *tokenClaims")
 	}
-	return claims.id, nil
+	return claims.Id, nil
 }
 
 func NewAuthService(repos repository.AuthorizationRepository) *AuthService {
