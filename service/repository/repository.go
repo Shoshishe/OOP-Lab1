@@ -28,18 +28,15 @@ type BankRepository interface {
 type AccountRepository interface {
 	usecases.BankAccount
 	usecases.AccountActionsReverser
+	GetAccounts(usrId int) ([]entities.BankAccount, error)
 	entities.UserTransferOutside
+	entities.BankAccountOutside
 }
 
 type ClientRepository interface {
 	usecases.Client
 	usecases.ClientActionsReverser
 }
-
-type AdminRepository interface {
-	usecases.Admin
-}
-
 type ManagerRepository interface {
 	usecases.Manager
 }
@@ -56,24 +53,24 @@ type OuterSpecialistRepository interface {
 }
 type UserRepository interface {
 	ClientRepository
-	AdminRepository
 	OperatorRepository
 	OuterSpecialistRepository
 	ManagerRepository
 }
 
 const (
-	AccountCreationAction     = "CreateAccount"
-	FreezeAccountAction       = "FreezeBankAccount"
-	BlockAccountAction        = "BlockBankAccount"
-	TransferMoneyAction       = "TransferMoney"
-	AddBankAction             = "AddBank"
-	SendPaymentRequest        = "SendCredits"
-	TakeInstallmentPlanAction = "TakeInstallmentPlan"
-	TakeLoanAction            = "TakeLoan"
-	CancelTransferAction      = "CancelTransferMoney"
-	SendInfoForPaymentAction  = "SendInfoForPayment"
-	TransferRequestAction     = "TransferRequest"
+	PersonAccountCreationAction  = "CreateAccountAsPerson"
+	CompanyAccountCreationAction = "CreateAccountAsCompany"
+	FreezeAccountAction          = "FreezeBankAccount"
+	BlockAccountAction           = "BlockBankAccount"
+	TransferMoneyAction          = "TransferMoney"
+	AddBankAction                = "AddBank"
+	SendPaymentRequest           = "SendCredits"
+	TakeInstallmentPlanAction    = "TakeInstallmentPlan"
+	TakeLoanAction               = "TakeLoan"
+	CancelTransferAction         = "CancelTransferMoney"
+	SendInfoForPaymentAction     = "SendInfoForPayment"
+	TransferRequestAction        = "TransferRequest"
 )
 
 type AccountReverserRepository interface {
@@ -97,16 +94,3 @@ type OuterSpecialistReverserRepository interface {
 type ReverserInfoRepository interface {
 	usecases.ReverserInfo
 }
-
-// func NewReverserRepository(accountReverser usecases.AccountActionsReverser, bankReverser usecases.BankActionsReverser,
-// 	clientReverser usecases.ClientActionsReverser, operatorReverser usecases.OperatorActionsReverser,
-// 	managerReverser usecases.ManagerActionsReverser, reverserInfo usecases.ReverserInfo) *ReverserRepository {
-// 	return &ReverserRepository{
-// 		AccountReverser:  accountReverser,
-// 		BankReverser:     bankReverser,
-// 		ClientReverser:   clientReverser,
-// 		OperatorReverser: operatorReverser,
-// 		ManagerReverser:  managerReverser,
-// 		ReverserInfo:     reverserInfo,
-// 	}
-// }

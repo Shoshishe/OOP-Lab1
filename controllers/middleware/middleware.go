@@ -1,15 +1,26 @@
-package controllers
+package middleware
 
 import (
 	"errors"
 	"main/domain/entities"
+	serviceInterfaces "main/service/service_interfaces"
 	"net/http"
 	"strings"
 )
 
 const authorizationHeader = "Authorization"
 
-func (middleware *Middleware) userIdentity(req *http.Request) (int, error) {
+type Middleware struct {
+	authMiddleware serviceInterfaces.TokenAuth
+}
+
+func NewMiddleware(authMiddleware serviceInterfaces.TokenAuth) *Middleware {
+	return &Middleware{
+		authMiddleware: authMiddleware,
+	}
+}
+
+func (middleware *Middleware) UserIdentity(req *http.Request) (int, error) {
 	header := req.Header.Get(authorizationHeader)
 	if header == "" {
 		return 0, errors.New("empty header")
@@ -25,8 +36,8 @@ func (middleware *Middleware) userIdentity(req *http.Request) (int, error) {
 	return userId, nil
 }
 
-func (middleware *Middleware) userRole(req *http.Request) (entities.UserRole, error) {
-	userId, err := middleware.userIdentity(req)
+func (middleware *Middleware) UserRole(req *http.Request) (entities.UserRole, error) {
+	userId, err := middleware.UserIdentity(req)
 	if err != nil {
 		return 0,err
 	}
@@ -37,7 +48,7 @@ func (middleware *Middleware) userRole(req *http.Request) (entities.UserRole, er
 	return role, nil
 }
 
-func (middleware *Middleware) enableCors(writer http.ResponseWriter) {
+func (middleware *Middleware) EnableCors(writer http.ResponseWriter) {
 	writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
     writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE, PATCH")
     writer.Header().Add("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")

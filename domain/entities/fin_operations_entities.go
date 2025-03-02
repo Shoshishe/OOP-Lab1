@@ -41,12 +41,14 @@ func NewAction(actionId int, actionName string, actionArgs []string) *Action {
 }
 
 type PaymentRequest struct {
+	id int
 	amount            MoneyAmount
 	accountNum        AccountIdenitificationNum
 	requesterFullName FullName
 	clientId          int
 	companyId         int
 }
+
 
 func (req *PaymentRequest) RequesterFullName() FullName {
 	return req.requesterFullName
@@ -58,6 +60,10 @@ func (req *PaymentRequest) Amount() MoneyAmount {
 
 func (req *PaymentRequest) AccountNum() AccountIdenitificationNum {
 	return req.accountNum
+}
+
+func (req *PaymentRequest) Id() int {
+	return req.id
 }
 
 func (req *PaymentRequest) ClientId() int {
@@ -73,6 +79,7 @@ func NewPaymentRequest(amount MoneyAmount, accountNum string, requsterFullName s
 		amount:     amount,
 		accountNum: accountNum,
 		clientId:   clientId,
+		requesterFullName: requsterFullName,
 		companyId:  companyId,
 	}
 	err := req.ValidateRequest()
@@ -217,7 +224,7 @@ type Loan struct {
 }
 
 func (loan *Loan) BankProviderName() BankName {
-	return loan.accountIdenitificationNum
+	return loan.bankProviderName
 }
 
 func (loan *Loan) AccountIdenitificationNum() AccountIdenitificationNum {

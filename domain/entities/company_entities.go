@@ -30,7 +30,7 @@ func NewBank(info Company, Type BankType) (*Bank, error) {
 		Info: info,
 		Type: Type,
 	}
-	err := bank.Info.validator.ValidateCompany(&info)
+	err := bank.Info.validator.validateCompany(&info)
 	if err != nil {
 		return nil, err
 	}
@@ -52,12 +52,12 @@ type CompanyOutside interface {
 type BankOutside interface {
 	CheckNameUniqueness(legalName Name) (bool, error)
 }
-type companyValidator interface {
-	ValidateCompany(*Company) error
+type CompanyValidator interface {
+	validateCompany(*Company) error
 }
 
 type bankValidatorPolicy struct {
-	companyValidator
+	CompanyValidator
 	validator *companyValidatorPolicy
 }
 
@@ -75,7 +75,7 @@ func NewBankValidatorPolicy(validator *companyValidatorPolicy) *bankValidatorPol
 }
 
 type companyValidatorPolicy struct {
-	companyValidator
+	CompanyValidator
 	outsideInfo CompanyOutside
 }
 
@@ -85,7 +85,7 @@ func NewCompanyValidatorPolicy(outsideInfo CompanyOutside) *companyValidatorPoli
 	}
 }
 
-func (companyValidator *companyValidatorPolicy) ValidateCompany(company *Company) error {
+func (companyValidator *companyValidatorPolicy) validateCompany(company *Company) error {
 	return errors.Join(
 		companyValidator.ValidateLegalName(company),
 		companyValidator.ValidateBankIdentifNum(company),
@@ -141,11 +141,11 @@ type Company struct {
 	payersAccountNumber   PayersAccountNumber
 	companyType           CompanyType
 	bankIdentificationNum BankIdentificationNum
-	validator             companyValidator
+	validator             CompanyValidator
 }
 
 func NewCompany(legalName Name, legalAdress Adress,
-	payersAccountNum AccountIdenitificationNum, companyType CompanyType, bankIdentifNum BankIdentificationNum, validator companyValidator) (*Company, error) {
+	payersAccountNum AccountIdenitificationNum, companyType CompanyType, bankIdentifNum BankIdentificationNum, validator CompanyValidator) (*Company, error) {
 	companyValue := &Company{
 		validator:             validator,
 		legalName:             legalName,
@@ -154,7 +154,7 @@ func NewCompany(legalName Name, legalAdress Adress,
 		companyType:           companyType,
 		bankIdentificationNum: bankIdentifNum,
 	}
-	err := validator.ValidateCompany(companyValue)
+	err := validator.validateCompany(companyValue)
 	if err != nil {
 		return nil, err
 	}

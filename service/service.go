@@ -10,16 +10,17 @@ type Service struct {
 	BankServ    serviceInterfaces.Bank
 	AccountServ serviceInterfaces.BankAccount
 	ReverseServ serviceInterfaces.Reverser
-	//	UsersServ 	Users
+	UsersServ   serviceInterfaces.UserService
 	serviceInterfaces.TokenAuth
 }
 
-func NewRepository(authRepos repository.AuthorizationRepository, bankRepos repository.BankRepository, accountRepos repository.AccountRepository, reverserRepos repository.ReverserInfoRepository) *repository.Repository {
+func NewRepository(authRepos repository.AuthorizationRepository, bankRepos repository.BankRepository, accountRepos repository.AccountRepository, reverserRepos repository.ReverserInfoRepository, userRepos repository.UserRepository) *repository.Repository {
 	return &repository.Repository{
 		AuthRepos:        authRepos,
 		BankRepos:        bankRepos,
 		BankAccountRepos: accountRepos,
 		ReverserRepos:    reverserRepos,
+		UserRepos:        userRepos,
 	}
 }
 
@@ -37,5 +38,6 @@ func NewService(repos repository.Repository) *Service {
 			repos.ReverserRepos,
 			repos.BankRepos,
 		),
+		UsersServ: NewUserServices(repos.UserRepos),
 	}
 }

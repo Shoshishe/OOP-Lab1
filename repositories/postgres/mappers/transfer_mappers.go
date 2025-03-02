@@ -2,7 +2,7 @@ package persistanceMappers
 
 import (
 	"main/domain/entities"
-	persistance "main/repository/postgres/entities_models"
+	persistance "main/repositories/postgres/entities_models"
 )
 
 func ToTransferEntitity(transfer persistance.TransferPersistance, validator entities.Validator) (entities.Transfer, error) {

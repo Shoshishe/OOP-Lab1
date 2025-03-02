@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	tokenTTL   = 12 * time.Hour
+	tokenTTL   = 48 * time.Hour
 	signingKey = ",;mkljhgffxdgcfhvg"
 )
 
@@ -28,7 +28,6 @@ type tokenClaims struct {
 type AuthService struct {
 	serviceInterfaces.Authorization
 	serviceInterfaces.TokenAuth
-	//RoleAccess
 	repos repository.AuthorizationRepository
 }
 

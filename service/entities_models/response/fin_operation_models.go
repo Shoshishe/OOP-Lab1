@@ -22,3 +22,8 @@ type InstallmentPlanModel struct {
 	StartOfTerm      time.Time `json:"start_of_term"`
 	EndOfTerm        time.Time `json:"end_of_term"`
 }
+type TransferModel struct {
+	SenderAccountNum   string `json:"sender_acc_num" binding:"required"`
+	SumOfTransfer      int64  `json:"amount" binding:"required"`
+	ReceiverAccountNum string `json:"receiver_acc_num" binding:"required"`
+}

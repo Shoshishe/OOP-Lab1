@@ -1,14 +1,16 @@
 package main
 
 import (
+	"log"
+	"main/controllers"
+	"main/repositories/postgres"
+	userPostgres "main/repositories/postgres/user_postgres"
+	"main/service"
+	"net/http"
+
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 	"github.com/spf13/viper"
-	"log"
-	"main/controllers"
-	"main/repository/postgres"
-	"main/service"
-	"net/http"
 )
 
 func main() {
@@ -31,6 +33,7 @@ func main() {
 		postgres.NewBankPostgres(db),
 		postgres.NewBankAccountPostgres(db),
 		postgres.NewReverserRepository(db),
+		userPostgres.NewUserPostgres(db),
 	)
 	serv := service.NewService(*repos)
 	controllers := controllers.NewController(serv)

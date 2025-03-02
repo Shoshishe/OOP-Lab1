@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"main/domain/entities"
 	"main/service/entities_models/request"
+	"main/service/entities_models/response"
 	serviceErrors "main/service/errors"
 	request_mappers "main/service/mappers/request"
+	response_mappers "main/service/mappers/response"
 	"main/service/repository"
 	serviceInterfaces "main/service/service_interfaces"
 	"main/utils"
+	"time"
 )
 
 type BankAccountService struct {
@@ -16,14 +19,44 @@ type BankAccountService struct {
 	repos repository.AccountRepository
 }
 
-func (serv *BankAccountService) CreateAccount(account request.BankAccountModel, usrId int, usrRole entities.UserRole) error {
-	account.AccountIdentificationNum = utils.GenerateHashedPassword(account.BankFullName + fmt.Sprint(usrId)) //Too lazy to figure out the better way
+func (serv *BankAccountService) GetAccounts(usrId int, usrRole entities.UserRole) ([]response.BankAccountModel,error) {
 	if usrRole == entities.RoleUser {
-		accountEntity, err := request_mappers.ToAccountEntity(&account)
+		accountsList, err := serv.repos.GetAccounts(usrId)
+		if err != nil {
+			return nil, err
+		}
+		responseList := make([]response.BankAccountModel, len(accountsList))
+		for i, account := range accountsList {
+			responseList[i] = *response_mappers.ToAccountModel(&account)
+		}
+		return responseList, nil
+	} else {
+		return nil, serviceErrors.NewRoleError("not permitted on requested role")
+	}
+}
+
+func (serv *BankAccountService) CreateAccountAsPerson(account request.BankAccountModel, usrId int, usrRole entities.UserRole) error {
+	account.AccountIdentificationNum = utils.GenerateHashedPassword(account.BankFullName + fmt.Sprint(usrId) + time.Now().String()) //Too lazy to figure out the better way
+	if usrRole == entities.RoleUser {
+		accountEntity, err := request_mappers.ToAccountEntity(&account, entities.NewRequestValidatePolicy(serv.repos))
 		if err != nil {
 			return err
 		}
-		err = serv.repos.CreateAccount(*accountEntity, usrId)
+		err = serv.repos.CreateAccountAsPerson(*accountEntity, usrId)
+		return err
+	} else {
+		return serviceErrors.NewRoleError("not permitted on requsted role")
+	}
+}
+
+func (serv *BankAccountService) CreateAccountAsCompany(account request.CompanyBankAccountModel, usrId int, usrRole entities.UserRole) error {
+	account.AccountIdentificationNum = utils.GenerateHashedPassword(account.BankFullName + fmt.Sprint(account.CompanyId) + time.Now().String()) //Too lazy to figure out the better way
+	if usrRole == entities.RoleOuterSpecialist {
+		accountEntity, err := request_mappers.FromCompanyRequestToAccountEntity(&account, entities.NewRequestValidatePolicy(serv.repos))
+		if err != nil {
+			return err
+		}
+		err = serv.repos.CreateAccountAsCompany(*accountEntity, account.CompanyId, usrId)
 		return err
 	} else {
 		return serviceErrors.NewRoleError("not permitted on requsted role")

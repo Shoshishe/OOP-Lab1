@@ -2,22 +2,23 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/lib/pq"
 )
 
 const (
-	UsersTable = "users"
-	BanksTable = "companies"
-	AccountsTable = "accounts"
-	LoansTable = "loans"
-	PaymentRequestsTable = "requests"
-	TransfersTable = "transfers"
-	CompaniesTable = "companies"
-	CompaniesWorkersTable = "companies_workers"
-	ActionsTable = "actions"
-	BanksPerRequestLimit = 50
+	UsersTable               = "users"
+	BanksTable               = "companies"
+	AccountsTable            = "accounts"
+	LoansTable               = "loans"
+	PaymentRequestsTable     = "requests"
+	TransfersTable           = "transfers"
+	CompaniesTable           = "companies"
+	CompaniesWorkersTable    = "companies_workers"
+	ActionsTable             = "actions"
+	BanksPerRequestLimit     = 50
 	TransfersPerRequestLimit = 50
 )
 
@@ -43,26 +44,35 @@ func NewPostgresDb(conf DbConfig) (*sql.DB, error) {
 	return db, nil
 }
 
-func ReverseAction(tx *sql.Tx,db *sql.DB, args []string, usrId int) error {
+func ReverseAction(tx *sql.Tx, db *sql.DB, args []string, usrId int) error {
 	var emptyCheck bool
-	query := fmt.Sprintf("SELECT * FROM %s WHERE user_id=$1 AND first_action_args=$2", ActionsTable)
+	query := fmt.Sprintf("SELECT 1 FROM %s WHERE user_id=$1 AND $2 <@ first_action_args", ActionsTable)
 	row := db.QueryRow(query, usrId, pq.Array(args))
 	err := row.Scan(&emptyCheck)
 	if err == sql.ErrNoRows {
-		query = fmt.Sprintf("INSERT INTO %s (second_action_id, second_action_args, second_action_type) VALUES ($1,$2,$3)", ActionsTable)
+		query = fmt.Sprintf("UPDATE %s SET second_action_id=$1, second_action_args=$2, second_action_type=$3 WHERE user_id=$4", ActionsTable)
 		var zeroSlice []string
-		_, err = db.Exec(query, 0, pq.Array(zeroSlice), "")
+		_, err = db.Exec(query, 0, pq.Array(zeroSlice), "", usrId)
 		if err != nil {
 			tx.Rollback()
 			return err
 		}
-	}
-	query = fmt.Sprintf("UPDATE %s SET first_action_id=$1, first_action_args=$2, first_action_type=$3 WHERE user_id=$4", ActionsTable)
-	var zeroSlice []string
-	_, err = db.Exec(query, 0, pq.Array(zeroSlice), "", usrId)
-	if err != nil {
-		tx.Rollback()
-		return err
+	} else {
+		query = fmt.Sprintf("UPDATE %s SET first_action_id=$1, first_action_args=$2, first_action_type=$3 WHERE user_id=$4", ActionsTable)
+		var zeroSlice []string
+		affectedRows, err := db.Exec(query, 0, pq.Array(zeroSlice), "", usrId)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		rowsCount, err := affectedRows.RowsAffected()
+		if rowsCount == 0 {
+			return errors.New("such action doesn't exist")
+		}
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
 	return nil
 }

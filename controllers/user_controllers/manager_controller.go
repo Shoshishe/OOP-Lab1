@@ -1,4 +1,4 @@
-package controllers
+package userControllers
 
 import (
 	"main/controllers/middleware"
@@ -8,19 +8,12 @@ import (
 	"strconv"
 )
 
-type ReverseController struct {
-	service    serviceInterfaces.Reverser
+type managerController struct {
+	serv    serviceInterfaces.ManagerService
 	middleware middleware.Middleware
 }
 
-func NewReverseController(serv serviceInterfaces.Reverser ,middleware *middleware.Middleware) *ReverseController {
-	return &ReverseController{
-		middleware: *middleware,
-		service: serv,
-	}
-}
-
-func (controller *ReverseController) Reverse(writer http.ResponseWriter, req *http.Request) { 
+func (controller *managerController) ApproveCredit(writer http.ResponseWriter, req *http.Request) {
 	usrId, err := controller.middleware.UserIdentity(req)
 	if err != nil {
 		controllerResponse.NewErrorResponse(writer, http.StatusBadRequest, err.Error())
@@ -31,16 +24,23 @@ func (controller *ReverseController) Reverse(writer http.ResponseWriter, req *ht
 		controllerResponse.NewErrorResponse(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	operationIdArg := req.PathValue("operation_id")
-	operationId, err := strconv.Atoi(operationIdArg)
+	requestIdArg := req.PathValue("request_id")
+	requestId, err := strconv.Atoi(requestIdArg)
 	if err != nil {
-		controllerResponse.NewErrorResponse(writer, http.StatusBadRequest, "path argument is not a number")
+		controllerResponse.NewErrorResponse(writer, http.StatusBadRequest, "invalid path arg")
 		return
 	}
-	err = controller.service.Reverse(operationId, usrId, usrRole)
+	err = controller.serv.ApproveCredit(requestId, usrId, usrRole)
 	if err != nil {
 		controllerResponse.LastErrorHandling(writer, err)
 		return
 	}
 	controllerResponse.OkResponse(writer)
+}
+
+func NewMangerController(serv serviceInterfaces.ManagerService, middleware middleware.Middleware) *managerController {
+	return &managerController{
+		serv: serv, 
+		middleware: middleware,
+	}
 }

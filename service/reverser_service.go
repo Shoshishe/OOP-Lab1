@@ -3,7 +3,7 @@ package service
 import (
 	"main/domain/entities"
 	domainErrors "main/domain/entities/domain_errors"
-	persistanceMappers "main/repository/postgres/mappers"
+	persistanceMappers "main/repositories/postgres/mappers"
 	serviceErrors "main/service/errors"
 	"main/service/repository"
 	serviceInterfaces "main/service/service_interfaces"
@@ -49,17 +49,37 @@ func (reverser *Reverser) Reverse(actionId, usrId, usrRole int) error {
 		return err
 	}
 	switch actionName {
-	case repository.AccountCreationAction:
+	case repository.PersonAccountCreationAction:
 		if usrRole != entities.RoleAdmin {
 			return serviceErrors.NewRoleError("not permitted to reverse such action")
 		}
-		if len(args) < 3 {
+		if len(args) < 4 {
 			return domainErrors.NewInvalidField("invalid action args")
 		}
-		bankAccount, err := entities.NewBankAccount(args[0], args[1], args[2])
+		bankAccount, err := entities.NewBankAccount(args[0], args[1], args[2], entities.NewResponseValidatePolicy())
 		if err != nil {
 			return err
 		}
+		requesterId, err := strconv.Atoi(args[3])
+		if err != nil {
+			return domainErrors.NewInvalidField("invalid id argument")
+		}
+		return reverser.accountReverser.ReverseAccountCreation(*bankAccount, requesterId)
+	case repository.CompanyAccountCreationAction:
+		if usrRole != entities.RoleAdmin {
+			return serviceErrors.NewRoleError("not permitted to reverse such action")
+		}
+		if len(args) < 4 {
+			return domainErrors.NewInvalidField("invalid action args")
+		}
+		bankAccount, err := entities.NewBankAccount(args[0], args[1], args[2], entities.NewResponseValidatePolicy())
+		if err != nil {
+			return err
+		}
+		// requesterId, err := strconv.Atoi(args[3])
+		// if err != nil {
+		// 	return domainErrors.NewInvalidField("invalid id argument")
+		// }
 		return reverser.accountReverser.ReverseAccountCreation(*bankAccount, usrId)
 	case repository.BlockAccountAction:
 		if usrRole != entities.RoleAdmin {
@@ -82,7 +102,7 @@ func (reverser *Reverser) Reverse(actionId, usrId, usrRole int) error {
 			return domainErrors.NewInvalidField("invalid args counter")
 		}
 		if usrRole != entities.RoleAdmin {
-			return serviceErrors.NewRoleError("not permitted too reverse such action")
+			return serviceErrors.NewRoleError("not permitted to reverse such action")
 		}
 		amount, err := strconv.Atoi(args[2])
 		if err != nil {

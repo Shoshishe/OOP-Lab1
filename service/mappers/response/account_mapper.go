@@ -10,6 +10,7 @@ func ToAccountModel(account *entities.BankAccount) *response.BankAccountModel {
 		Amount: account.MoneyAmount(),
 		AccountIdentificationNum: account.AccountIdenitificationNum(),
 		BankFullName: account.BankFullName(),
+		BankIdentificationNum: account.BankIdentificationNum(),
 		IsFrozen: account.IsFrozen(),
 		IsBlocked: account.IsBlocked(),
 	}

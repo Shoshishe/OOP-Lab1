@@ -8,5 +8,5 @@ type BankAccountModel struct {
 	BankFullName             entities.BankName                  `json:"bank_name"`
 	BankIdentificationNum    entities.BankIdentificationNum     `json:"bank_identif_num"`
 	IsFrozen                 bool                               `json:"is_frozen"`
-	IsBlocked                bool                               `json:"is_blocked"`
+	IsBlocked                bool                               `json:"-"`
 }

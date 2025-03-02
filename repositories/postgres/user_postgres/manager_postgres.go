@@ -3,7 +3,7 @@ package userPostgres
 import (
 	"database/sql"
 	"fmt"
-	"main/repository/postgres"
+	"main/repositories/postgres"
 	"main/service/repository"
 )
 
@@ -11,11 +11,6 @@ type ManagerPostgres struct {
 	operator OperatorPostgres
 	repository.ManagerRepository
 	db *sql.DB
-}
-
-func (repos *ManagerPostgres) CancelOuterWorkerOperation(operationId int, userId int) error {
-	//DO THE WHOLE SHIT. OR, PERHAPS, DO NOT
-	return nil
 }
 
 func (repos *ManagerPostgres) ApproveCredit(requestId int, usrId int) error {

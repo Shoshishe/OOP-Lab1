@@ -2,12 +2,13 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"main/domain/entities"
 	"main/domain/usecases"
 
-	persistance "main/repository/postgres/entities_models"
-	persistanceMappers "main/repository/postgres/mappers"
+	persistance "main/repositories/postgres/entities_models"
+	persistanceMappers "main/repositories/postgres/mappers"
 
 	"github.com/lib/pq"
 )
@@ -34,6 +35,9 @@ func (repos *ReverserPostgres) GetAction(actionId int) (entities.Action, error) 
 			row := repos.db.QueryRow(query, actionId)
 			err := row.Scan(&action.ActionName, pq.Array(&action.ActionArgs))
 			if err != nil {
+				if err == sql.ErrNoRows {
+					return entities.Action{}, errors.New("no action with such id")
+				}
 				return entities.Action{}, err
 			}
 		} else {

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"main/domain/entities"
-	"main/repository/postgres"
-	persistance "main/repository/postgres/entities_models"
-	persistanceMappers "main/repository/postgres/mappers"
+	"main/repositories/postgres"
+	persistance "main/repositories/postgres/entities_models"
+	persistanceMappers "main/repositories/postgres/mappers"
 	"main/service/repository"
 	"strconv"
 )
@@ -103,7 +103,6 @@ func (repos *OperatorPostgres) CancelTransferOperation(operationId int, usrId in
 	if err != nil {
 		return err
 	}
-
 	tx.Commit()
 	return nil
 }

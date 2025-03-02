@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"main/domain/entities"
-	persistance "main/repository/postgres/entities_models"
-	persistanceMappers "main/repository/postgres/mappers"
+	persistance "main/repositories/postgres/entities_models"
+	persistanceMappers "main/repositories/postgres/mappers"
 	"main/service/repository"
 )
 

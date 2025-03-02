@@ -14,15 +14,11 @@ type OuterSpecialistServiceImpl struct {
 	repos repository.OuterSpecialistRepository
 }
 
-func (serv *OuterSpecialistServiceImpl) SendInfoForPayment(req request.PaymentRequestModel, usrId int, usrRole entities.UserRole) error {
+func (serv *OuterSpecialistServiceImpl) SendInfoForPayment(requestId int, usrId int, usrRole entities.UserRole) error {
 	if usrRole != entities.RoleOuterSpecialist {
 		return serviceErrors.NewRoleError("can't send info for payment as non outer specialist")
 	}
-	requestEntity, err := request_mappers.ToRequestEntity(req)
-	if err != nil {
-		return err
-	}
-	return serv.repos.SendInfoForPayment(*requestEntity, usrId)
+	return serv.repos.SendInfoForPayment(requestId, usrId)
 }
 
 func (serv *OuterSpecialistServiceImpl) TransferRequest(transfer request.TransferModel, usrId int, usrRole entities.UserRole) error {

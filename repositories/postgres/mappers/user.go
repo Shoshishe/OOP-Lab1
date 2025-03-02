@@ -2,7 +2,7 @@ package persistanceMappers
 
 import (
 	"main/domain/entities"
-	persistance "main/repository/postgres/entities_models"
+	persistance "main/repositories/postgres/entities_models"
 )
 
 func ToUserEntity(usr persistance.UserPersistance, outsideInfo entities.UserOutside) (*entities.User, error) {

@@ -2,7 +2,7 @@ package persistanceMappers
 
 import (
 	"main/domain/entities"
-	persistance "main/repository/postgres/entities_models"
+	persistance "main/repositories/postgres/entities_models"
 )
 
 type persistanceOutsideInfo struct {
@@ -24,9 +24,8 @@ func NewPersistanceOutsideInfo() *persistanceOutsideInfo {
 func ToBankEntity(bank *persistance.BankPersistance) (*entities.Bank, error) {
 	bankInfo, err := entities.NewCompany(bank.LegalName, bank.LegalAdress,
 		bank.PayersAccNumber, bank.CompanyType,
-		bank.BankIdentifNum, entities.NewBankValidatorPolicy(
-			entities.NewCompanyValidator(persistanceOutsideInfo{}),
-		))
+		bank.BankIdentifNum, entities.NewCompanyValidator(persistanceOutsideInfo{}),
+	)
 	if err != nil {
 		return nil, err
 	}

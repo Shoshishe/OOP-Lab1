@@ -8,7 +8,8 @@ type Authorization interface {
 }
 
 type BankAccount interface {
-	CreateAccount(account entities.BankAccount, userId int) error
+	CreateAccountAsPerson(account entities.BankAccount, userId int) error
+	CreateAccountAsCompany(account entities.BankAccount, companyId, issuerId int) error
 	PutMoney(amount entities.MoneyAmount, accountIdentificationNum entities.AccountIdenitificationNum) error
 	TakeMoney(amount entities.MoneyAmount, accountIdentifNum entities.AccountIdenitificationNum) error
 	TransferMoney(transfer entities.Transfer, userId int) error
@@ -22,10 +23,6 @@ type Bank interface {
 	AddBank(bank entities.Bank, userId int) error
 }
 
-// type Company interface {
-// 	GetPaymentRequests(pagination int) error
-// }
-
 type Client interface {
 	TakeLoan(loan entities.Loan, userId int) error
 	TakeInstallmentPlan(installment entities.InstallmentPlan, userId int) error
@@ -35,23 +32,16 @@ type Client interface {
 type Operator interface {
 	ApprovePaymentRequest(requestId int, userId int) error
 	GetOperationsList(pagination int) ([]entities.Transfer, error)
-	CancelTransferOperation(operationId int, userId int) error
 }
 
 type Manager interface {
 	Operator
 	ApproveCredit(requestId int, userId int) error
-	CancelOuterWorkerOperation(operationId int, userId int) error
 }
 
 type OuterSpecialist interface {
-	SendInfoForPayment(req entities.PaymentRequest, userId int) error
+	SendInfoForPayment(requestId int, userId int) error
 	TransferRequest(transfer entities.Transfer, userId int) error
-}
-
-type Admin interface {
-	CancelActions(userId int) error
-	ViewLogs() (string, error)
 }
 
 type ReverserInfo interface {

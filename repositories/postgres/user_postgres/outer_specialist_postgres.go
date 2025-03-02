@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"main/domain/entities"
-	"main/repository/postgres"
+	"main/repositories/postgres"
 	"main/service/repository"
 )
 
@@ -14,25 +14,25 @@ type OuterSpecialistPostgres struct {
 	db *sql.DB
 }
 
-func (repos *OuterSpecialistPostgres) SendInfoForPayment(req entities.PaymentRequest, usrId int) error {
+func (repos *OuterSpecialistPostgres) SendInfoForPayment(requestId int, usrId int) error {
 	tx, err := repos.db.Begin()
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-	query := fmt.Sprintf("INSERT INTO %s (client_id,account_num, amount, pasport_series, pasport_num) SELECT $1, $2, $3, pasport_series, pasport_num FROM %s WHERE id=$1", postgres.PaymentRequestsTable, postgres.UsersTable)
-	_, err = tx.Exec(query, req.ClientId(), req.AccountNum(), req.Amount())
+	query := fmt.Sprintf("UPDATE %s AS rd SET pasport_series=s.pasport_series, pasport_num=s.pasport_num FROM %s AS s WHERE s.id=rd.client_id AND rd.request_id=$1", postgres.PaymentRequestsTable, postgres.UsersTable)
+	_, err = tx.Exec(query, requestId)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	args := make([]string, 0, 3)
-	args = append(args, fmt.Sprint(req.ClientId()), req.AccountNum(), fmt.Sprint(req.Amount()))
-	err = postgres.InsertAction(tx,repository.SendInfoForPaymentAction, args, usrId)
+	args = append(args, fmt.Sprint(requestId, usrId))
+	err = postgres.InsertAction(tx, repository.SendInfoForPaymentAction, args, usrId)
 	if err != nil {
 		return err
 	}
-    tx.Commit()
+	tx.Commit()
 	return nil
 }
 
@@ -49,7 +49,7 @@ func (repos *OuterSpecialistPostgres) TransferRequest(transfer entities.Transfer
 		return err
 	}
 	args := make([]string, 0, 4)
-	args = append(args, fmt.Sprint(transfer.TransferOwnerId()),transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), fmt.Sprint(transfer.SumOfTransfer()))
+	args = append(args, fmt.Sprint(transfer.TransferOwnerId()), transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), fmt.Sprint(transfer.SumOfTransfer()))
 	err = postgres.InsertAction(tx, repository.TransferRequestAction, args, usrId)
 	if err != nil {
 		return err
@@ -71,8 +71,8 @@ func (repos *OuterSpecialistPostgres) ReverseTransferRequest(transfer entities.T
 		return err
 	}
 	args := make([]string, 0, 4)
-	args = append(args, fmt.Sprint(transfer.TransferOwnerId()),transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), fmt.Sprint(transfer.SumOfTransfer()))
-	err = postgres.ReverseAction(tx, repos.db,  args, usrId)
+	args = append(args, fmt.Sprint(transfer.TransferOwnerId()), transfer.SenderAccountNum(), transfer.ReceiverAccountNum(), fmt.Sprint(transfer.SumOfTransfer()))
+	err = postgres.ReverseAction(tx, repos.db, args, usrId)
 	if err != nil {
 		return err
 	}
